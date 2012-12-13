@@ -1,0 +1,152 @@
+doctype 5
+html(lang="en")
+  head
+    title= pageTitle
+    link(href="css/default.css", rel="stylesheet")
+    link(href="css/colorpicker.css", rel="stylesheet")
+    script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false")
+    script(src="js/jquery-1.8.3.min.js")
+    script(src="js/sugar-1.3.6.min.js")
+    script(src="js/colorpicker.js")
+    script(type='text/javascript')
+       $(document).ready(function() {
+          var strokeColor = '#FF0000';
+          var myLatLng = new google.maps.LatLng(0, -180);
+          var mapOptions = {
+            zoom: 3,
+            center: myLatLng,
+            mapTypeId: google.maps.MapTypeId.TERRAIN
+          };
+
+          map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+
+          var coordinates = [
+              new google.maps.LatLng(37.772323, -122.214897),
+              new google.maps.LatLng(21.291982, -157.821856),
+              new google.maps.LatLng(-18.142599, 178.431),
+              new google.maps.LatLng(-27.46758, 153.027892)
+          ];
+          path = new google.maps.Polyline({
+            path: coordinates,
+            strokeColor: strokeColor,
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+          });
+
+          path.setMap(map);
+
+          // options
+          $('#colorSelector').ColorPicker({color: strokeColor, 
+            onSubmit: function(hsb, hex, rgb, el) {
+              path.setOptions({strokeColor: hex});
+              $(el).children().css('backgroundColor', '#' + hex);
+            }}).children().css('backgroundColor', strokeColor);
+
+          // submit forms on file select
+          $(':file').change(function(){
+              $(this).parents('form').submit();
+            });
+        });
+
+        function drawPasted(){
+          var txt = $('#coord').val();
+          var txt_coords = txt.split('\n').map(function(x){return x.split(',').map($.trim);});
+          var coords = txt_coords.map(function(x){return new google.maps.LatLng(x[0],x[1]);});
+          path.setPath([]);
+          path = new google.maps.Polyline({
+            path: coords,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            editable: true,
+          });
+          path.setMap(map);
+        }
+
+        function test_load(){
+          $('#dd').load('/hw');
+        }
+
+        function test_json(){
+          $.getJSON('/baustellen',
+              {},
+              function(json){
+                alert(json);
+                $('#dd').html(json.length);
+              });
+        }
+
+        function loadMap(file){
+          if(!file) file = prompt('Filename to load:');
+          // '/map?file=' somehow breaks syntax highlighting for Jade
+          $.getJSON('/map?file' + '=' + file,
+              {},
+              function(json){
+                var coords = json.map(function(x){return new google.maps.LatLng(x.lat,x.lon)});
+                path.setPath(coords);
+              });
+        }
+  body
+    #layout
+      img(src='images/layout.png', onclick="$('#layouts').toggle()")
+      ul#layouts
+        li(onclick="$('#controls').toggle()") Seitenleiste
+        li(onclick="$('#infoTable').toggle()") Tabellen
+        li(onclick="$('#testing').toggle()") Testbereich
+        li(onclick="$('#files').toggle()") Dateiliste
+    #controls
+      b Upload
+      form(action="/upload", method="post", enctype="multipart/form-data")
+        input#fileUpload(type='file', name='map')
+      hr
+      b Baustelle
+        ul
+          li Plaene
+          li Gates
+      b LKW
+      br
+      b Filter
+        ul
+          li Typ
+          li Outliers
+      b Options
+        br
+        label(for='colorSelector') Color:
+        #colorSelector
+          div
+    #map_canvas
+    table#infoTable
+      thead
+        tr
+          th Truck
+          th(colspan=2) Dumper 1
+          th(colspan=2) Dumper 2
+        tr
+          th Segment
+          th Gate 1 to 1
+          th Gate 1 to 3
+          th Gate 1 to 1
+          th Gate 1 to 3
+      tbody
+        each s in [1,2,3,4]
+          tr
+            td Segment time #{s}
+            td 2:30
+            td 2:30
+            td 2:30
+            td 2:30
+    #testing Paste coordinates here:
+      br
+      textarea#coord.
+        37.772323, -122.214897
+        21.291982, -157.821856
+        -18.142599, 178.431
+        -27.46758, 153.027892
+      br
+      button(onclick='drawPasted()') draw route!
+      button(onclick='loadMap()') load Map
+      #dd lala
+    #files
+      each f in files
+        a(href="javascript: loadMap('"+f+"')")= f
+        br
