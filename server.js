@@ -40,18 +40,11 @@ app.get('/map', function(req, res){
     parser.parseString(data, function (err, result) {
         // console.dir(result);
         eyes.inspect(result);
-        // console.log('Done');
         res.json(result.gpx.trk[0].trkseg[0].trkpt.map(function(x){
           return {lat: x.$.lat, lon: x.$.lon, ele: x.ele[0], time: x.time[0]};
         }));
     });
   });
-//   res.json([
-// [37.772323, -122.214897],
-// [21.291982, -157.821856],
-// [-18.142599, 178.431],
-// [-27.46758, 153.027892],
-//   	]);
 });
 
 app.get('/maps', function(req, res){
@@ -68,7 +61,6 @@ app.post('/upload', function(req, res){
   // ?? fs.rename(from, to);
   fs.readFile(file.path, function (err, data) {
     fs.writeFile(pathFrom, data, function (err) {
-      // java -jar RouteConverterCmdLine.jar "Logger1\931Lange20100325_06_04_32.TES" Gpx11Format test2.gpx
       var cmd = 'java -jar RouteConverterCmdLine.jar "'+ pathFrom +'" Gpx11Format "'+ pathTo +'"';
       console.log(cmd);
       exec(cmd, function(error, stdout, stderr){

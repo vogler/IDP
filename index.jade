@@ -9,83 +9,100 @@ html(lang="en")
     script(src="js/sugar-1.3.6.min.js")
     script(src="js/colorpicker.js")
     script(type='text/javascript')
-       $(document).ready(function() {
-          var strokeColor = '#FF0000';
-          var myLatLng = new google.maps.LatLng(0, -180);
-          var mapOptions = {
-            zoom: 3,
-            center: myLatLng,
-            mapTypeId: google.maps.MapTypeId.TERRAIN
-          };
+      $(document).ready(function() {
+        var strokeColor = '#FF0000';
+        var myLatLng = new google.maps.LatLng(0, -180);
+        var mapOptions = {
+          zoom: 3,
+          center: myLatLng,
+          mapTypeId: google.maps.MapTypeId.TERRAIN
+        };
 
-          map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+        map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
 
-          var coordinates = [
-              new google.maps.LatLng(37.772323, -122.214897),
-              new google.maps.LatLng(21.291982, -157.821856),
-              new google.maps.LatLng(-18.142599, 178.431),
-              new google.maps.LatLng(-27.46758, 153.027892)
-          ];
-          path = new google.maps.Polyline({
-            path: coordinates,
-            strokeColor: strokeColor,
-            strokeOpacity: 1.0,
-            strokeWeight: 2,
-          });
-
-          path.setMap(map);
-
-          // options
-          $('#colorSelector').ColorPicker({color: strokeColor, 
-            onSubmit: function(hsb, hex, rgb, el) {
-              path.setOptions({strokeColor: hex});
-              $(el).children().css('backgroundColor', '#' + hex);
-            }}).children().css('backgroundColor', strokeColor);
-
-          // submit forms on file select
-          $(':file').change(function(){
-              $(this).parents('form').submit();
-            });
+        var coordinates = [
+            new google.maps.LatLng(37.772323, -122.214897),
+            new google.maps.LatLng(21.291982, -157.821856),
+            new google.maps.LatLng(-18.142599, 178.431),
+            new google.maps.LatLng(-27.46758, 153.027892)
+        ];
+        path = new google.maps.Polyline({
+          path: coordinates,
+          strokeColor: strokeColor,
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
         });
 
-        function drawPasted(){
-          var txt = $('#coord').val();
-          var txt_coords = txt.split('\n').map(function(x){return x.split(',').map($.trim);});
-          var coords = txt_coords.map(function(x){return new google.maps.LatLng(x[0],x[1]);});
-          path.setPath([]);
-          path = new google.maps.Polyline({
-            path: coords,
-            strokeColor: '#FF0000',
-            strokeOpacity: 1.0,
-            strokeWeight: 2,
-            editable: true,
+        path.setMap(map);
+
+        // options
+        $('#colorSelector').ColorPicker({color: strokeColor, 
+          onSubmit: function(hsb, hex, rgb, el) {
+            path.setOptions({strokeColor: hex});
+            $(el).children().css('backgroundColor', '#' + hex);
+          }}).children().css('backgroundColor', strokeColor);
+
+        // submit forms on file select
+        $(':file').change(function(){
+            $(this).parents('form').submit();
           });
-          path.setMap(map);
-        }
+      });
 
-        function test_load(){
-          $('#dd').load('/hw');
-        }
 
-        function test_json(){
-          $.getJSON('/baustellen',
-              {},
-              function(json){
-                alert(json);
-                $('#dd').html(json.length);
-              });
-        }
+      function drawPasted(){
+        var txt = $('#coord').val();
+        var txt_coords = txt.split('\n').map(function(x){return x.split(',').map($.trim);});
+        var coords = txt_coords.map(function(x){return new google.maps.LatLng(x[0],x[1]);});
+        path.setPath([]);
+        path = new google.maps.Polyline({
+          path: coords,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+          editable: true,
+        });
+        path.setMap(map);
+      }
 
-        function loadMap(file){
-          if(!file) file = prompt('Filename to load:');
-          // '/map?file=' somehow breaks syntax highlighting for Jade
-          $.getJSON('/map?file' + '=' + file,
-              {},
-              function(json){
-                var coords = json.map(function(x){return new google.maps.LatLng(x.lat,x.lon)});
-                path.setPath(coords);
-              });
+      function loadMap(file){
+        // '/map?file=' somehow breaks syntax highlighting for Jade
+        $.getJSON('/map?file' + '=' + file,
+            {},
+            function(json){
+              var coords = json.map(function(x){return new google.maps.LatLng(x.lat,x.lon)});
+              path.setPath(coords);
+            });
+      }
+
+      // animation
+      var playing = false;
+      var fullPath, i;
+      function animate(){
+        if(!playing) {
+          $('#btn_anim').text('stop');
+          fullPath = path.getPath().getArray();
+          i = 1;
+          playing = setInterval('anim_step()', prompt('Interval in ms:', 500));
+        } else {
+          anim_stop();
         }
+      }
+      function anim_step(){
+        if(i >= fullPath.length) {
+          anim_stop();
+        }
+        path.setPath(fullPath.first(i));
+        i++;
+      }
+      function anim_pause(){
+        $('#btn_anim').text('play');
+        clearInterval(playing);
+        playing = false;
+      }
+      function anim_stop(){
+        anim_pause();
+        path.setPath(fullPath);
+      }
   body
     #layout
       img(src='images/layout.png', onclick="$('#layouts').toggle()")
@@ -143,9 +160,8 @@ html(lang="en")
         -18.142599, 178.431
         -27.46758, 153.027892
       br
-      button(onclick='drawPasted()') draw route!
-      button(onclick='loadMap()') load Map
-      #dd lala
+      button(onclick='drawPasted()') draw route
+      button#btn_anim(onclick='animate()') play
     #files
       each f in files
         a(href="javascript: loadMap('"+f+"')")= f

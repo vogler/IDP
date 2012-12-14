@@ -60,7 +60,7 @@ button {
   position: relative;
   width: 36px;
   height: 36px;
-  background: url(images/select.png);
+  background: url(../images/select.png);
 }
 #colorSelector div {
   position: absolute;
@@ -68,7 +68,7 @@ button {
   left: 3px;
   width: 30px;
   height: 30px;
-  background: url(images/select.png) center;
+  background: url(../images/select.png) center;
 }
 
 @media print {
