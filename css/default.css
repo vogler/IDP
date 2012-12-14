@@ -22,15 +22,14 @@ button {
   margin-right: 2em;
 }
 
-#coord {
-  width: 200px;
-  height: 70px;
+#controls {
+  /*background-color: lightblue;*/
+  /*padding: .8em;
+  box-sizing: border-box;*/
+  width: 250px;
+  height: 80%;
+  float: right;
 }
-
-#testing {
-  float: left;
-}
-
 
 #layout {
   background-color: red;
@@ -49,12 +48,6 @@ button {
   float: left;
 }
 
-#controls {
-  background-color: yellow;
-  width: 250px;
-  height: 500px;
-  float: right;
-}
 
 
 @media print {
