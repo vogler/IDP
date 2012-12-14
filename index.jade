@@ -69,10 +69,14 @@ html(lang="en")
         $.getJSON('/map?file' + '=' + file,
             {},
             function(json){
-              var coords = json.map(function(x){return new google.maps.LatLng(x.lat,x.lon)});
+              var bounds = new google.maps.LatLngBounds();
+              var coords = json.map(function(x){
+                var ll = new google.maps.LatLng(x.lat,x.lon);
+                bounds.extend(ll);
+                return ll;
+              });
               path.setPath(coords);
-              map.setCenter(coords.first());
-              map.setZoom(13);
+              map.fitBounds(bounds);
             });
       }
 
