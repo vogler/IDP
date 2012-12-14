@@ -65,8 +65,8 @@ html(lang="en")
       }
 
       function loadMap(file){
-        // '/map?file=' somehow breaks syntax highlighting for Jade
-        $.getJSON('/map?file' + '=' + file,
+        //- '/map?file=' somehow breaks syntax highlighting for Jade
+        $.getJSON('/map/' + file,
             {},
             function(json){
               var bounds = new google.maps.LatLngBounds();

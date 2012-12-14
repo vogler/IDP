@@ -32,8 +32,8 @@ app.get('/baustellen', function(req, res){
 });
 
 var parser = new xml2js.Parser();
-app.get('/map', function(req, res){
-  var file = req.query['file'];
+app.get('/map/:file', function(req, res){
+  var file = req.params.file;
   console.log(file);
   if(!file) file = 'test.gpx';
   fs.readFile(pathMaps + file, function (err, data) {
