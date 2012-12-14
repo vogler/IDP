@@ -71,6 +71,8 @@ html(lang="en")
             function(json){
               var coords = json.map(function(x){return new google.maps.LatLng(x.lat,x.lon)});
               path.setPath(coords);
+              map.setCenter(coords.first());
+              map.setZoom(13);
             });
       }
 
@@ -102,6 +104,30 @@ html(lang="en")
       function anim_stop(){
         anim_pause();
         path.setPath(fullPath);
+      }
+
+      var infowindow = new google.maps.InfoWindow();
+      var marker;
+      var geocoder = new google.maps.Geocoder();
+      function geocode() {
+        var latlng = path.getPath().getArray().first();
+        geocoder.geocode({'latLng': latlng}, function(results, status) {
+          if (status == google.maps.GeocoderStatus.OK) {
+            if (results[1]) {
+              map.setZoom(11);
+              marker = new google.maps.Marker({
+                  position: latlng,
+                  map: map
+              });
+              infowindow.setContent(results[1].formatted_address);
+              infowindow.open(map, marker);
+            } else {
+              alert('No results found');
+            }
+          } else {
+            alert('Geocoder failed due to: ' + status);
+          }
+        });
       }
   body
     #layout
@@ -162,6 +188,7 @@ html(lang="en")
       br
       button(onclick='drawPasted()') draw route
       button#btn_anim(onclick='animate()') play
+      button(onclick='geocode()') reverse geocode
     #files
       each f in files
         a(href="javascript: loadMap('"+f+"')")= f
