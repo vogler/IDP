@@ -10,6 +10,7 @@ html(lang="en")
     script(src="js/jquery-ui-1.9.2.custom.min.js")
     script(src="js/jquery.miniColors.min.js")
     script(src="js/sugar-1.3.6.min.js")
+    script(src="js/sugar-locale-de.js")
     style
       .ui-widget {
         font-size: .8em;
@@ -17,6 +18,7 @@ html(lang="en")
     script(type='text/javascript')
       $(document).ready(function() {
         var strokeColor = '#FF0000';
+        var strokeWeight = 2;
         var myLatLng = new google.maps.LatLng(0, -180);
         var mapOptions = {
           zoom: 3,
@@ -36,7 +38,7 @@ html(lang="en")
           path: coordinates,
           strokeColor: strokeColor,
           strokeOpacity: 1.0,
-          strokeWeight: 2,
+          strokeWeight: strokeWeight,
         });
 
         path.setMap(map);
@@ -62,19 +64,8 @@ html(lang="en")
           icons: { primary: "ui-icon-play" }
         })
         .click(function() {
-          var options;
-          if ( $( this ).text() === "play" ) {
-            options = {
-              label: "pause",
-              icons: { primary: "ui-icon-pause" }
-            };
-          } else {
-            options = {
-              label: "play",
-              icons: { primary: "ui-icon-play" }
-            };
-          }
-          $( this ).button( "option", options );
+          var status = $(this).text() === 'play' ? 'pause' : 'play';
+          $(this).button("option", {label: status, icons: {primary: 'ui-icon-'+status}});
         });
         $( "#btn_stop" ).button({
             text: false,
@@ -84,20 +75,19 @@ html(lang="en")
         $('#cb_follow').click(function(){
           anim_follow = !anim_follow;
         }).attr('checked', anim_follow).button({
-          text: false, label: 'folgen',
+          text: true, label: 'folgen',
           icons: { primary: 'ui-icon-arrow-4'}
         });
 
         // speed slider
         anim_speed = 20;
         $( "#speed_slider" ).slider({
-          orientation: "vertical",
           range: "min",
           min: 1,
           max: 100,
           value: anim_speed,
           slide: function( event, ui ) {
-            $( "#speed" ).val( ui.value );
+            $( "#speed" ).text( ui.value );
             anim_speed = ui.value;
             if(anim_playing){
               anim_pause();
@@ -105,13 +95,24 @@ html(lang="en")
             }
           }
         });
-        $( "#speed" ).val(anim_speed);
+        $( "#speed" ).text(anim_speed);
 
         // colorpicker
         $('#colorSelector').val(strokeColor).addClass('black').hide().miniColors({
           readonly: true, opacity: true, 
           change: function(hex, rgba){
             path.setOptions({strokeColor: hex, strokeOpacity: rgba.a});
+          }
+        });
+
+        // stroke spinner
+        $( "#stroke_spinner" ).val(strokeWeight).spinner({
+          min: 0,
+          max: 20,
+          step: 0.1,
+          numberFormat: 'n',
+          spin: function( event, ui ) {
+            path.setOptions({strokeWeight: ui.value});
           }
         });
 
@@ -132,6 +133,13 @@ html(lang="en")
               });
               path.setPath(coords);
               map.fitBounds(bounds);
+              $('#time_start').text(Date.create(json.first().time).long('de'));
+              $('#time_end').text(Date.create(json.last().time).long('de'));
+              $('#time_duration').text(
+                Date.create(
+                  Date.range(json.first().time, json.last().time).duration()
+                ).addHours(-1).format('{24hr}:{mm}')
+              );
             });
       }
 
@@ -166,7 +174,7 @@ html(lang="en")
       function anim_stop(){
         anim_pause();
         anim_i = 0;
-        path.setPath(anim_fullPath);
+        if(anim_fullPath) path.setPath(anim_fullPath);
         $( "#btn_play" ).button( "option", {
           label: "play",
           icons: { primary: "ui-icon-play" }
@@ -217,6 +225,16 @@ html(lang="en")
           li Gates
       h3 LKW
       div
+      h3 Karte
+      div
+        | Start: 
+        span#time_start
+        br
+        | Ende: 
+        span#time_end
+        br
+        | Dauer: 
+        span#time_duration
       h3 Filter
       div
         ul
@@ -228,14 +246,19 @@ html(lang="en")
         button#btn_stop(onclick='anim_stop()') stop
         input#cb_follow(type="checkbox")
         label(for="cb_follow") folgen
-        input#speed(type="text", value="1", readonly, style="border: 0; color: grey; font-weight: bold;")
-        #speed_slider
         br
+        | Geschwindigkeit: 
+        span#speed
+        | x
+        #speed_slider
       h3 Optionen
       div
-        | Farbe:
+        | Farbe: 
         input(type='text')#colorSelector
-        br
+        |  Stärke: 
+        input(type='text')#stroke_spinner
+        //- html5 number picker
+        //- input(type="number", min="0", max="10", step=".1", value="1")
     #map_canvas
     table#infoTable
       thead

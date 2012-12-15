@@ -30,6 +30,12 @@ button {
   height: 80%;
   float: right;
 }
+#speed_slider {
+  margin-top: 3px;
+}
+#stroke_spinner {
+  width: 2em;
+}
 
 #layout {
   background-color: red;
