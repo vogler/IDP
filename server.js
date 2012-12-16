@@ -13,6 +13,7 @@ app.configure(function(){
   app.set('port', process.env.PORT || 3000);
   app.set('views', __dirname + '');
   app.use(express.bodyParser()); // needed for req.files
+  app.use(express.methodOverride()); // hidden input _method for put/del
   app.use(require('stylus').middleware(__dirname + '/public'));
   app.use(express.static(path.join(__dirname, 'public')));
 });
@@ -26,48 +27,59 @@ var pathUploads = __dirname + '/maps/uploads/';
 var pathMaps    = __dirname + '/maps/gpx/';
 
 // DB
-// var mongo = require('mongodb');
-// mongo.MongoClient.connect("mongodb://localhost:27017/idp", function(err, db) {
-//   if(err) { return console.dir(err); }
-//   var collection = db.collection('baustellen');
-//   var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
-//   collection.insert(docs, function(err, result) {
-//     collection.remove({mykey:1}, function(err, numberOfRemovedDocs) {});
-//     collection.remove({mykey:2}, function(err, numberOfRemovedDocs) {});
-//     collection.remove({},        function(err, numberOfRemovedDocs) {});
-//   });
-// });
+// Environment: appfog or local
+if(process.env.VCAP_SERVICES){
+    var env = JSON.parse(process.env.VCAP_SERVICES);
+    var mongo = env['mongodb-1.8'][0]['credentials'];
+} else {
+    var mongo = { db: 'idp' }
+}
+var generate_mongo_url = function(obj){
+    obj.hostname = (obj.hostname || 'localhost');
+    obj.port = (obj.port || 27017);
+    obj.db = (obj.db || 'test');
+    return (obj.username && obj.password ?
+      obj.username + ":" + obj.password + "@" : '')
+    + obj.hostname + ":" + obj.port + "/" + obj.db;
+}
+var mongourl = generate_mongo_url(mongo);
 
-// var mongoose = require('mongoose');
-// mongoose.connect('localhost', 'idp');
-// collection = mongoose.noSchema('baustellen'); // doesn't exist anymore -> Schema mandatory :(
-// var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
-// collection.insert(docs, function(err, result) {
-//   collection.remove({mykey:1}, function(err, numberOfRemovedDocs) {});
-//   collection.remove({mykey:2}, function(err, numberOfRemovedDocs) {});
-//   collection.remove({},        function(err, numberOfRemovedDocs) {});
-// });
-
+// mongoskin
 var mongo = require('mongoskin');
-var db = mongo.db('localhost:27017/idp?auto_reconnect', {safe:true});
-var collection = db.collection('baustellen');
-var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
-collection.insert(docs, function(err, result) {
-  collection.remove({mykey:1}, function(err, numberOfRemovedDocs) {});
-  collection.remove({mykey:2}, function(err, numberOfRemovedDocs) {});
-  // collection.remove({},        function(err, numberOfRemovedDocs) {});
+var db = mongo.db(mongourl + '?auto_reconnect', {safe:true});
+db.open(function(err, db){
+  if(err) console.log("Couldn't connect to "+mongourl);
+  else console.log("Connected to "+mongourl);
 });
+var baustellen = db.collection('baustellen');
 
 
 // routes
 app.get('/', function(req, res){
   fs.readdir(pathMaps, function(err, files){
-    res.render('index.jade', {pageTitle: 'GPS-Daten', files: files});
+    baustellen.findItems({}, {sort: 'name'}, function (err, items) {
+      res.render('index.jade', {pageTitle: 'GPS-Daten', files: files, baustellen: items});
+    });
   });
 });
 
 app.get('/baustellen', function(req, res){
-  res.json(['München', 'Berlin', 'Augsburg']);
+  // res.json(['München', 'Berlin', 'Augsburg']);
+  baustellen.findItems(function (err, items) {
+    res.json(items.map(function(x){return x.name}));
+  });
+});
+
+app.post('/baustellen', function(req, res){
+  baustellen.insert({name: req.body.baustelle}, function(err, result) {
+    res.redirect("back");
+  });
+});
+
+app.del('/baustellen', function(req, res){
+  baustellen.removeById(req.body.id, function(err, result) {
+    res.send("ok"); // otherwise jQuery's ajax doesn't execute the success callback
+  });
 });
 
 var parser = new xml2js.Parser();

@@ -58,19 +58,50 @@ html(lang="en")
         });
 
         // buttons
-        $('button').button();
-        $( "#btn_play" ).button({
-          text: false,
-          icons: { primary: "ui-icon-play" }
-        })
-        .click(function() {
-          var status = $(this).text() === 'play' ? 'pause' : 'play';
+        //- $('button').button();
+        $('button, input[type = submit]').each(function(index){
+          var classes = $(this).attr('class');
+          if(classes) {
+            var icon = classes.split(' ').find(/^ui-icon-/);
+          }
+          var options = icon ? {
+            text: false,
+            icons: { primary: icon }
+          } : {};
+          $(this).button(options);
+        });
+        // baustellen
+        $( "#baustellen" ).dialog({autoOpen: false, modal: true});
+        $( "#btn_baustellen" ).click(function(){
+          $('#baustellen').dialog('open');
+        });
+        $('#baustellen button.ui-icon-trash').click(function(){
+          var li = $(this).parent();
+          var id = li.attr('id');
+          $.ajax({
+            url: '/baustellen',
+            type: 'DELETE',
+            data: {id: id},
+            success: function(result){
+              li.slideUp();
+            }
+          });
+        });
+        $('#baustellen form').submit(function(){
+          //- console.log($(this).serializeArray());
+          var name = $(this).find("input[name = 'baustelle']").val();
+          $.post('/baustellen', $(this).serialize(), function(data){
+            $('#baustellen').load('/ #baustellen');
+          });
+          return false;
+        });
+        // animation
+        $('#btn_play').click(function() {
+          anim_play();
+          var status = anim_playing ? 'pause' : 'play';
           $(this).button("option", {label: status, icons: {primary: 'ui-icon-'+status}});
         });
-        $( "#btn_stop" ).button({
-            text: false,
-            icons: { primary: "ui-icon-stop" }
-        });
+        $('#btn_stop').click(anim_stop);
         anim_follow = true;
         $('#cb_follow').click(function(){
           anim_follow = !anim_follow;
@@ -212,6 +243,18 @@ html(lang="en")
         li(onclick="$('#controls').toggle()") Seitenleiste
         li(onclick="$('#infoTable').toggle()") Tabellen
         li(onclick="$('#files').toggle()") Dateiliste
+    #baustellen
+      ul
+        each b in baustellen
+          li(id= b._id)
+            button.ui-icon-trash entfernen
+            |  #{b.name}
+      form
+        input(type='text', name='baustelle')
+        input.ui-icon-plus(type='submit', value='hinzufügen')
+        //- somehow input(type='submit') shows only text instead of icon
+        //- button.ui-icon-plus(onclick="$(this).parents('form').submit()") hinzufügen
+        //- Problem: submits form twice?!
     #controls.ui-accordion.ui-widget.ui-helper-reset
       h3 Upload
       div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
@@ -219,7 +262,10 @@ html(lang="en")
           input#fileUpload(type='file', name='map')
       h3 Baustelle
       div
-        button(onclick='geocode()') reverse geocode
+        select
+          each x in baustellen
+            option(value=x._id)= x.name
+        button#btn_baustellen.ui-icon-gear verwalten
         ul
           li Plaene
           li Gates
@@ -235,6 +281,8 @@ html(lang="en")
         br
         | Dauer: 
         span#time_duration
+        br
+        button(onclick='geocode()') reverse geocode
       h3 Filter
       div
         ul
@@ -242,8 +290,8 @@ html(lang="en")
           li Outliers
       h3 Animation
       div
-        button#btn_play(onclick='anim_play()') play
-        button#btn_stop(onclick='anim_stop()') stop
+        button#btn_play.ui-icon-play play
+        button#btn_stop.ui-icon-stop stop
         input#cb_follow(type="checkbox")
         label(for="cb_follow") folgen
         br
