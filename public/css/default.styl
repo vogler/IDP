@@ -1,0 +1,51 @@
+html, body
+  height 100%
+  margin 0
+  padding 0
+  font-family Arial, Sans
+
+[onclick]
+  cursor pointer
+
+button
+  cursor default!important
+
+#map_canvas
+  height 80%
+
+#infoTable
+  float left
+  margin-right 2em
+
+#controls
+  // padding .8em
+  // box-sizing border-box
+  width 250px
+  height 80%
+  float right
+#speed_slider
+  margin-top 3px
+#stroke_spinner
+  width 2em
+
+#layout
+  background-color red
+  z-index 9
+  position absolute
+  top 0px
+  right 0px
+#layout img
+  float right
+  width 20px
+  height 20px
+#layouts
+  display none
+  float left
+
+
+@media print
+  html, body
+    height auto
+  
+  #map_canvas
+    height 650px

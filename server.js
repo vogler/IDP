@@ -3,39 +3,63 @@ var express = require('express')
   , fs = require('fs')
   , eyes = require('eyes')
   , xml2js = require('xml2js')
-  , sys = require('sys');
-var exec = require('child_process').exec;
-var MongoClient = require('mongodb').MongoClient;
+  , sys = require('sys')
+  , exec = require('child_process').exec;
 var app = express();
 
-// app.use(express.logger());
-app.use(express.static(path.join(__dirname, '')));
-app.set('views', __dirname + '');
-app.use(express.bodyParser()); // needed for req.files
+// configure server
+app.configure(function(){
+  // app.use(express.logger());
+  app.set('port', process.env.PORT || 3000);
+  app.set('views', __dirname + '');
+  app.use(express.bodyParser()); // needed for req.files
+  app.use(require('stylus').middleware(__dirname + '/public'));
+  app.use(express.static(path.join(__dirname, 'public')));
+});
+
+app.configure('development', function(){
+  app.use(express.errorHandler());
+});
 
 // configure paths
 var pathUploads = __dirname + '/maps/uploads/';
 var pathMaps    = __dirname + '/maps/gpx/';
 
 // DB
-MongoClient.connect("mongodb://localhost:27017/idp", function(err, db) {
-  if(err) { return console.dir(err); }
+// var mongo = require('mongodb');
+// mongo.MongoClient.connect("mongodb://localhost:27017/idp", function(err, db) {
+//   if(err) { return console.dir(err); }
+//   var collection = db.collection('baustellen');
+//   var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
+//   collection.insert(docs, function(err, result) {
+//     collection.remove({mykey:1}, function(err, numberOfRemovedDocs) {});
+//     collection.remove({mykey:2}, function(err, numberOfRemovedDocs) {});
+//     collection.remove({},        function(err, numberOfRemovedDocs) {});
+//   });
+// });
 
-  var collection = db.collection('baustellen');
-  var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
+// var mongoose = require('mongoose');
+// mongoose.connect('localhost', 'idp');
+// collection = mongoose.noSchema('baustellen'); // doesn't exist anymore -> Schema mandatory :(
+// var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
+// collection.insert(docs, function(err, result) {
+//   collection.remove({mykey:1}, function(err, numberOfRemovedDocs) {});
+//   collection.remove({mykey:2}, function(err, numberOfRemovedDocs) {});
+//   collection.remove({},        function(err, numberOfRemovedDocs) {});
+// });
 
-  collection.insert(docs, {safe: true}, function(err, result) {
-    collection.remove({mykey:1}, {w:1}, function(err, numberOfRemovedDocs) {});
-    collection.remove({mykey:2}, {w:1}, function(err, numberOfRemovedDocs) {});
-    collection.remove({}, {w:1}, function(err, numberOfRemovedDocs) {});
-  });
+var mongo = require('mongoskin');
+var db = mongo.db('localhost:27017/idp?auto_reconnect', {safe:true});
+var collection = db.collection('baustellen');
+var docs = [{mykey:1}, {mykey:2}, {mykey:3}];
+collection.insert(docs, function(err, result) {
+  collection.remove({mykey:1}, function(err, numberOfRemovedDocs) {});
+  collection.remove({mykey:2}, function(err, numberOfRemovedDocs) {});
+  // collection.remove({},        function(err, numberOfRemovedDocs) {});
 });
 
 
-app.get('/hw', function(req, res){
-  res.send('Hello World');
-});
-
+// routes
 app.get('/', function(req, res){
   fs.readdir(pathMaps, function(err, files){
     res.render('index.jade', {pageTitle: 'GPS-Daten', files: files});
@@ -86,4 +110,5 @@ app.post('/upload', function(req, res){
   });
 });
 
-app.listen(3000);
+
+app.listen(app.get('port'));
