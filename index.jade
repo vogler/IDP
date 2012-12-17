@@ -18,7 +18,7 @@ html(lang="en")
     script(type='text/javascript')
       $(document).ready(function() {
         //- TODO: offline: ReferenceError: google is not defined
-        if(!google) alert("Couldn't load Google Maps API. Online?");
+        //- if(!google) alert("Couldn't load Google Maps API. Online?");
         var strokeColor = '#FF0000';
         var strokeWeight = 2;
         var myLatLng = new google.maps.LatLng(0, -180);
@@ -91,7 +91,7 @@ html(lang="en")
         });
         $('#baustellen form').submit(function(){
           //- console.log($(this).serializeArray());
-          var name = $(this).find("input[name = 'baustelle']").val();
+          //- var name = $(this).find("input[name = 'baustelle']").val();
           $.post('/baustellen', $(this).serialize(), function(data){
             $('#baustellen').load('/ #baustellen');
           });
@@ -102,23 +102,23 @@ html(lang="en")
           var btn = $(this);
           if(btn.attr('disabled')) return false;
           btn.attr('disabled', true);
-          //- $('#map_canvas').one('click', function(e){
-            //- console.log((e.pageX - this.offsetLeft) + ' ' + (e.pageY - this.offsetTop));
           google.maps.event.addListenerOnce(map, 'click', function(event) {
-            var pos = event.latLng;
-            var size = 0.001
-            var soutWest  = new google.maps.LatLng(pos.lat()-size, pos.lng()-size);
-            var northEast = new google.maps.LatLng(pos.lat()+size, pos.lng()+size);
-            var rectangle = new google.maps.Rectangle({
-              strokeColor: '#FF0000',
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
-              fillColor: '#FF0000',
-              fillOpacity: 0.35,
-              map: map,
-              bounds: new google.maps.LatLngBounds(soutWest, northEast)
+            var a = event.latLng;
+            google.maps.event.addListenerOnce(map, 'click', function(event) {
+              var b = event.latLng;
+              var bounds = new google.maps.LatLngBounds()
+              bounds.extend(a);
+              bounds.extend(b);
+              var rectangle = new google.maps.Rectangle({
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                bounds: bounds
+              });
             });
-            //- unbind
             btn.attr('disabled', false);
           });
         });
