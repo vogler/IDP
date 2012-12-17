@@ -17,6 +17,8 @@ html(lang="en")
       }
     script(type='text/javascript')
       $(document).ready(function() {
+        //- TODO: offline: ReferenceError: google is not defined
+        if(!google) alert("Couldn't load Google Maps API. Online?");
         var strokeColor = '#FF0000';
         var strokeWeight = 2;
         var myLatLng = new google.maps.LatLng(0, -180);
@@ -94,6 +96,31 @@ html(lang="en")
             $('#baustellen').load('/ #baustellen');
           });
           return false;
+        });
+        // gates
+        $('#btn_gate').click(function(){
+          var btn = $(this);
+          if(btn.attr('disabled')) return false;
+          btn.attr('disabled', true);
+          //- $('#map_canvas').one('click', function(e){
+            //- console.log((e.pageX - this.offsetLeft) + ' ' + (e.pageY - this.offsetTop));
+          google.maps.event.addListenerOnce(map, 'click', function(event) {
+            var pos = event.latLng;
+            var size = 0.001
+            var soutWest  = new google.maps.LatLng(pos.lat()-size, pos.lng()-size);
+            var northEast = new google.maps.LatLng(pos.lat()+size, pos.lng()+size);
+            var rectangle = new google.maps.Rectangle({
+              strokeColor: '#FF0000',
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: '#FF0000',
+              fillOpacity: 0.35,
+              map: map,
+              bounds: new google.maps.LatLngBounds(soutWest, northEast)
+            });
+            //- unbind
+            btn.attr('disabled', false);
+          });
         });
         // animation
         $('#btn_play').click(function() {
@@ -269,6 +296,8 @@ html(lang="en")
         ul
           li Plaene
           li Gates
+            | 
+            button#btn_gate.ui-icon-plus hinzufügen
       h3 LKW
       div
       h3 Karte
