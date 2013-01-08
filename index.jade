@@ -12,8 +12,54 @@ html(lang="de")
     script(src="js/bootstrap.min.js")
     script(src="js/sugar-1.3.6.min.js")
     script(src="js/sugar-locale-de.js")
+    script(src="js/knockout-2.2.0.js")
     != css('index')
     != js('index')
+    script
+      $(document).ready(function() {
+        function Task(data) {
+          this.name = ko.observable(data);
+        }
+
+        function TaskListViewModel() {
+          // Data
+          var self = this;
+          self.tasks = ko.observableArray([]);
+          this.baustelle = ko.observable();
+          self.newTaskText = ko.observable();
+          self.incompleteTasks = ko.computed(function() {
+            return ko.utils.arrayFilter(self.tasks(), function(task) { return !task._destroy });
+          });
+
+          // Operations
+          self.addTask = function() {
+            var name = this.newTaskText();
+            $.post('/baustellen', {baustelle: name}, function(data){
+              self.tasks.push(new Task(name));
+              self.newTaskText("");
+            });
+          };
+          self.removeTask = function(task) {
+            $.ajax({
+              url: '/baustellen',
+              type: 'DELETE',
+              data: {name: task.name},
+              success: function(result){
+                //- li.slideUp();
+                self.tasks.remove(task); // destroy
+              }
+            });
+          };
+
+          // Load initial state from server, convert it to Task instances, then populate self.tasks
+          $.getJSON("/baustellen", function(allData) {
+            var mappedTasks = $.map(allData, function(item) { return new Task(item) });
+            self.tasks(mappedTasks);
+          });    
+        }
+
+        ko.applyBindings(new TaskListViewModel());
+      });
   body
     #layout
       img(src='img/layout.png', onclick="$('#layouts').toggle()")
@@ -21,18 +67,23 @@ html(lang="de")
         li(onclick="$('#controls').toggle()") Seitenleiste
         li(onclick="$('#infoTable').toggle()") Tabellen
         li(onclick="$('#files').toggle()") Dateiliste
-    #baustellen
-      ul
-        each b in baustellen
-          li(id= b._id)
-            i.icon-trash
-            |  #{b.name}
-      form
-        input(type='text', name='baustelle')
-        input.ui-icon-plus(type='submit', value='hinzufügen')
-        //- somehow input(type='submit') shows only text instead of icon
-        //- button.ui-icon-plus(onclick="$(this).parents('form').submit()") hinzufügen
-        //- Problem: submits form twice?!
+    #baustellen.modal.fade.hide
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true") x
+        h3 Baustellen
+      .modal-body
+        ul(data-bind="foreach: tasks, visible: tasks().length > 0")
+          li
+            a(data-bind="click: $parent.removeTask"): i.icon-trash
+            span(data-bind="text: name")
+        form(data-bind="submit: addTask")
+          .input-append
+            input.span2(type='text', data-bind="value: newTaskText", placeholder='Name...')
+            a.btn(onclick="$(this).parents('form:first').submit()"): i.icon-plus
+            input.btn(type='submit', value='hinzufügen')
+          //- somehow input(type='submit') shows only text instead of icon
+          //- button.ui-icon-plus(onclick="$(this).parents('form').submit()") hinzufügen
+          //- Problem: submits form twice?!
     #controls.ui-accordion.ui-widget.ui-helper-reset
       h3 Upload
       div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
@@ -40,15 +91,13 @@ html(lang="de")
           input#fileUpload(type='file', name='map')
       h3 Baustelle
       div
-        select
-          each x in baustellen
-            option(value=x._id)= x.name
-        a.btn: i#btn_baustellen.icon-cog
+        select(data-bind="options: tasks, optionsCaption: 'wählen...', optionsText: 'name', value: baustelle")
+        a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
         ul
           li Plaene
           li Gates
             | 
-            a.btn.btn-mini: i#btn_gate.icon-plus
+            a.btn.btn-mini#btn_gate: i.icon-plus
       h3 LKW
       div
       h3 Karte

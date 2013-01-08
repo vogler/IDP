@@ -78,7 +78,8 @@ app.post('/baustellen', function(req, res){
 });
 
 app.del('/baustellen', function(req, res){
-  baustellen.removeById(req.body.id, function(err, result) {
+  // baustellen.removeById(req.body.id, function(err, result) {
+  baustellen.remove({name:req.body.name}, function(err, result) {
     res.send("ok"); // otherwise jQuery's ajax doesn't execute the success callback
   });
 });

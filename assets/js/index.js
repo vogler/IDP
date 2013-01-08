@@ -41,31 +41,6 @@ $(document).ready(function() {
     $(this).parents('form').submit();
   });
 
-  // baustellen
-  $( "#baustellen" ).dialog({autoOpen: false, modal: true});
-  $( "#btn_baustellen" ).click(function(){
-    $('#baustellen').dialog('open');
-  });
-  $('#baustellen .icon-trash').click(function(){
-    var li = $(this).parent();
-    var id = li.attr('id');
-    $.ajax({
-      url: '/baustellen',
-      type: 'DELETE',
-      data: {id: id},
-      success: function(result){
-        li.slideUp();
-      }
-    });
-  });
-  $('#baustellen form').submit(function(){
-    //- console.log($(this).serializeArray());
-    $.post('/baustellen', $(this).serialize(), function(data){
-      $('#baustellen').load('/ #baustellen');
-    });
-    return false;
-  });
-
   // gates
   $('#btn_gate').click(function(){
     var btn = $(this);
@@ -91,7 +66,7 @@ $(document).ready(function() {
       btn.attr('disabled', false);
     });
   });
-  
+
   // animation
   $('#btn_play').click(function() {
     anim_play();

@@ -73,7 +73,8 @@ app.post "/baustellen", (req, res) ->
     res.redirect "back"
 
 app.del "/baustellen", (req, res) ->
-  baustellen.removeById req.body.id, (err, result) ->
+  # baustellen.removeById req.body.id, (err, result) ->
+  baustellen.remove name: req.body.name, (err, result) ->
     res.send "ok" # otherwise jQuery's ajax doesn't execute the success callback
 
 app.get "/map/:file", (req, res) ->
