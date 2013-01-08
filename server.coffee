@@ -15,7 +15,8 @@ app.configure ->
   app.set "views", __dirname + ""
   app.use express.bodyParser() # needed for req.files
   app.use express.methodOverride() # hidden input _method for put/del
-  app.use require("stylus").middleware(__dirname + "/public")
+  # app.use require("stylus").middleware(__dirname + "/public")
+  app.use require('connect-assets')()
   app.use express.static(path.join(__dirname, "public"))
 
 app.configure "development", ->

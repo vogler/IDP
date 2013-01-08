@@ -6,11 +6,12 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "3.0.4",
+    "express": ">= 3.0.4",
     "jade": "*",
     "stylus": "*",
     "eyes": ">= 0.1.8",
-    "mongoskin": "0.4.x",
-    "xml2js": "0.2.x"
+    "mongoskin": ">= 0.4.4",
+    "xml2js": ">= 0.2.2",
+    "connect-assets": ">= 2.3.3"
   }
 }
