@@ -15,6 +15,7 @@ html(lang="de")
     script(src="js/knockout-2.2.0.js")
     != css('index')
     != js('index')
+    script#db_baustellen!= JSON.stringify(baustellen)
     script
       $(document).ready(function() {
         function Task(data) {
@@ -24,7 +25,10 @@ html(lang="de")
         function TaskListViewModel() {
           // Data
           var self = this;
-          self.tasks = ko.observableArray([]);
+          //- self.tasks = ko.observableArray([]);
+          self.tasks = ko.observableArray(JSON.parse($('#db_baustellen').text()).map(function(x){
+            return new Task(x.name);
+          }));
           this.baustelle = ko.observable();
           self.newTaskText = ko.observable();
           self.incompleteTasks = ko.computed(function() {
@@ -52,10 +56,10 @@ html(lang="de")
           };
 
           // Load initial state from server, convert it to Task instances, then populate self.tasks
-          $.getJSON("/baustellen", function(allData) {
-            var mappedTasks = $.map(allData, function(item) { return new Task(item) });
-            self.tasks(mappedTasks);
-          });    
+          //- $.getJSON("/baustellen", function(allData) {
+          //-   var mappedTasks = $.map(allData, function(item) { return new Task(item) });
+          //-   self.tasks(mappedTasks);
+          //- });    
         }
 
         ko.applyBindings(new TaskListViewModel());
