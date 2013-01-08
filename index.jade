@@ -2,18 +2,16 @@ doctype 5
 html(lang="de")
   head
     title= pageTitle
+    link(href="css/bootstrap.min.css", rel="stylesheet", media="screen")
     link(href="css/smoothness/jquery-ui-1.9.2.custom.min.css", rel="stylesheet")
     link(href="css/jquery.miniColors.css", rel="stylesheet")
     script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false")
     script(src="js/jquery-1.8.3.min.js")
     script(src="js/jquery-ui-1.9.2.custom.min.js")
     script(src="js/jquery.miniColors.min.js")
+    script(src="js/bootstrap.min.js")
     script(src="js/sugar-1.3.6.min.js")
     script(src="js/sugar-locale-de.js")
-    style
-      .ui-widget {
-        font-size: .8em;
-      }
     != css('index')
     != js('index')
   body
@@ -27,7 +25,7 @@ html(lang="de")
       ul
         each b in baustellen
           li(id= b._id)
-            button.ui-icon-trash entfernen
+            i.icon-trash
             |  #{b.name}
       form
         input(type='text', name='baustelle')
@@ -45,12 +43,12 @@ html(lang="de")
         select
           each x in baustellen
             option(value=x._id)= x.name
-        button#btn_baustellen.ui-icon-gear verwalten
+        a.btn: i#btn_baustellen.icon-cog
         ul
           li Plaene
           li Gates
             | 
-            button#btn_gate.ui-icon-plus hinzufügen
+            a.btn.btn-mini: i#btn_gate.icon-plus
       h3 LKW
       div
       h3 Karte
@@ -64,7 +62,9 @@ html(lang="de")
         | Dauer: 
         span#time_duration
         br
-        button(onclick='geocode()') reverse geocode
+        a.btn(onclick='geocode()')
+          i.icon-flag
+          |  reverse geocode
       h3 Filter
       div
         ul
@@ -72,10 +72,11 @@ html(lang="de")
           li Outliers
       h3 Animation
       div
-        button#btn_play.ui-icon-play play
-        button#btn_stop.ui-icon-stop stop
-        input#cb_follow(type="checkbox")
-        label(for="cb_follow") folgen
+        a.btn#btn_play: i.icon-play
+        a.btn(onclick='anim_stop()'): i.icon-stop
+        a.btn.active(onclick='anim_follow = !anim_follow', data-toggle="button")
+          i.icon-move
+          |  folgen
         br
         | Geschwindigkeit: 
         span#speed
@@ -90,7 +91,7 @@ html(lang="de")
         //- html5 number picker
         //- input(type="number", min="0", max="10", step=".1", value="1")
     #map_canvas
-    table#infoTable
+    #infoTable.span7: table.table.table-condensed
       thead
         tr
           th Truck

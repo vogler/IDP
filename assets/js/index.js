@@ -41,25 +41,12 @@ $(document).ready(function() {
     $(this).parents('form').submit();
   });
 
-  // buttons
-  //- $('button').button();
-  $('button, input[type = submit]').each(function(index){
-    var classes = $(this).attr('class');
-    if(classes) {
-      var icon = classes.split(' ').find(/^ui-icon-/);
-    }
-    var options = icon ? {
-      text: false,
-      icons: { primary: icon }
-    } : {};
-    $(this).button(options);
-  });
   // baustellen
   $( "#baustellen" ).dialog({autoOpen: false, modal: true});
   $( "#btn_baustellen" ).click(function(){
     $('#baustellen').dialog('open');
   });
-  $('#baustellen button.ui-icon-trash').click(function(){
+  $('#baustellen .icon-trash').click(function(){
     var li = $(this).parent();
     var id = li.attr('id');
     $.ajax({
@@ -73,12 +60,12 @@ $(document).ready(function() {
   });
   $('#baustellen form').submit(function(){
     //- console.log($(this).serializeArray());
-    //- var name = $(this).find("input[name = 'baustelle']").val();
     $.post('/baustellen', $(this).serialize(), function(data){
       $('#baustellen').load('/ #baustellen');
     });
     return false;
   });
+
   // gates
   $('#btn_gate').click(function(){
     var btn = $(this);
@@ -104,19 +91,12 @@ $(document).ready(function() {
       btn.attr('disabled', false);
     });
   });
+  
   // animation
   $('#btn_play').click(function() {
     anim_play();
     var status = anim_playing ? 'pause' : 'play';
-    $(this).button("option", {label: status, icons: {primary: 'ui-icon-'+status}});
-  });
-  $('#btn_stop').click(anim_stop);
-  anim_follow = true;
-  $('#cb_follow').click(function(){
-    anim_follow = !anim_follow;
-  }).attr('checked', anim_follow).button({
-    text: true, label: 'folgen',
-    icons: { primary: 'ui-icon-arrow-4'}
+    $(this).find('i').attr('class', 'icon-'+status);
   });
 
   // speed slider
@@ -159,6 +139,9 @@ $(document).ready(function() {
 });
 
 
+
+
+
 function loadMap(file){
   anim_stop();
   //- '/map?file=' somehow breaks syntax highlighting for Jade
@@ -185,6 +168,7 @@ function loadMap(file){
 
 // animation
 var anim_playing = false;
+var anim_follow = true;
 var anim_fullPath, anim_i;
 function anim_play(){
   if(!anim_playing) {
@@ -215,10 +199,7 @@ function anim_stop(){
   anim_pause();
   anim_i = 0;
   if(anim_fullPath) path.setPath(anim_fullPath);
-  $( "#btn_play" ).button( "option", {
-    label: "play",
-    icons: { primary: "ui-icon-play" }
-  });
+  $( "#btn_play i" ).attr('class', 'icon-play');
 }
 
 // geocode
