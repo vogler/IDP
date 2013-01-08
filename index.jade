@@ -62,12 +62,13 @@ html(lang="de")
         ko.applyBindings(new TaskListViewModel());
       });
   body
-    #layout
-      img(src='img/layout.png', onclick="$('#layouts').toggle()")
-      ul#layouts
-        li(onclick="$('#controls').toggle()") Seitenleiste
-        li(onclick="$('#infoTable').toggle()") Tabellen
-        li(onclick="$('#files').toggle()") Dateiliste
+    .dropdown.navbar-fixed-top
+      a.btn.btn-mini.dropdown-toggle(data-toggle="dropdown")
+        b.caret
+      ul.dropdown-menu
+        li: a(onclick="$('#controls').toggle()") Seitenleiste
+        li: a(onclick="$('#infoTable').toggle()") Tabellen
+        li: a(onclick="$('#files').toggle()") Dateiliste
     #baustellen.modal.fade.hide
       .modal-header
         button.close(data-dismiss="modal", aria-hidden="true") x
