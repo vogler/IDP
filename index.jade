@@ -15,7 +15,7 @@ html(lang="de")
     script(src="js/knockout-2.2.0.js")
     != css('index')
     != js('index')
-    script#db_baustellen!= JSON.stringify(baustellen)
+    script!= 'db_baustellen =' + JSON.stringify(baustellen)
     script
       $(document).ready(function() {
         function Task(data) {
@@ -26,14 +26,11 @@ html(lang="de")
           // Data
           var self = this;
           //- self.tasks = ko.observableArray([]);
-          self.tasks = ko.observableArray(JSON.parse($('#db_baustellen').text()).map(function(x){
+          self.tasks = ko.observableArray(db_baustellen.map(function(x){
             return new Task(x.name);
           }));
           this.baustelle = ko.observable();
           self.newTaskText = ko.observable();
-          self.incompleteTasks = ko.computed(function() {
-            return ko.utils.arrayFilter(self.tasks(), function(task) { return !task._destroy });
-          });
 
           // Operations
           self.addTask = function() {
