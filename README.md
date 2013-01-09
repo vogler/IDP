@@ -17,7 +17,7 @@ __Client:__
 [jQuery UI](http://jqueryui.com/),
 [Twitter Bootstrap](http://twitter.github.com/bootstrap/),
 [Knockout](http://knockoutjs.com),
-~~[Sugar](http://sugarjs.com/),~~
+~~[Sugar](http://sugarjs.com/)~~,
 [ColorPicker](http://www.abeautifulsite.net/blog/2011/02/jquery-minicolors-a-color-selector-for-input-controls/)
 
 #Installation

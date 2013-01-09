@@ -3,7 +3,7 @@ path = require("path")
 fs = require("fs")
 eyes = require("eyes")
 xml2js = require("xml2js")
-parser = new xml2js.Parser()
+xmlParser = new xml2js.Parser()
 sys = require("sys")
 exec = require("child_process").exec
 app = express()
@@ -25,7 +25,7 @@ app.configure "development", ->
 
 # configure paths
 pathUploads = __dirname + "/maps/uploads/"
-pathMaps = __dirname + "/maps/gpx/"
+pathMaps    = __dirname + "/maps/gpx/"
 
 # DB
 # Environment: appfog or local
@@ -51,6 +51,19 @@ db.open (err, db) ->
     console.log "Connected to " + mongourl
 # collections
 baustellen = db.collection("baustellen")
+# REST
+app.get "/db/:collection", (req, res) ->
+  db.collection(req.params.collection).findItems (err, items) ->
+    res.json items
+
+app.del "/db/:collection", (req, res) ->
+  db.collection(req.params.collection).removeById req.body._id, (err, result) ->
+    res.send req.body._id
+
+app.post "/db/:collection", (req, res) ->
+  db.collection(req.params.collection).insert req.body, (err, items) ->
+    console.log req.body
+    res.json req.body
 
 
 # routes
@@ -62,27 +75,16 @@ app.get "/", (req, res) ->
         files: files
         baustellen: items
 
-app.get "/baustellen", (req, res) ->
-  # res.json(['München', 'Berlin', 'Augsburg']);
-  baustellen.findItems (err, items) ->
-    res.json items.map((x) -> x.name)
-
-app.post "/baustellen", (req, res) ->
-  baustellen.insert
-    name: req.body.baustelle, (err, result) ->
-    res.redirect "back"
-
-app.del "/baustellen", (req, res) ->
-  # baustellen.removeById req.body.id, (err, result) ->
-  baustellen.remove name: req.body.name, (err, result) ->
-    res.send "ok" # otherwise jQuery's ajax doesn't execute the success callback
+app.get "/maps", (req, res) ->
+  fs.readdir pathMaps, (err, files) ->
+    res.json files
 
 app.get "/map/:file", (req, res) ->
   file = req.params.file
   console.log file
-  file = "test.gpx"  unless file
+  file = "test.gpx" unless file
   fs.readFile pathMaps + file, (err, data) ->
-    parser.parseString data, (err, result) ->
+    xmlParser.parseString data, (err, result) ->
       # console.dir(result);
       # eyes.inspect(result);
       res.json result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
@@ -91,10 +93,6 @@ app.get "/map/:file", (req, res) ->
         ele: x.ele[0]
         time: x.time[0]
       )
-
-app.get "/maps", (req, res) ->
-  fs.readdir pathMaps, (err, files) ->
-    res.json files
 
 app.post "/upload", (req, res) ->
   file = req.files.map
