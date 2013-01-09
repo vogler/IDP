@@ -15,30 +15,10 @@ html(lang="de")
     script(src="js/knockout-2.2.0.js")
     script(src="js/knockout.mapping-latest.js")
     != css('index')
+    != js('fixes')
     != js('index')
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script
-      var ENTER_KEY = 13;
-      ko.bindingHandlers.enterKey = {
-        init: function( element, valueAccessor, allBindingsAccessor, data ) {
-          var wrappedHandler, newValueAccessor;
-          wrappedHandler = function( data, event ) {
-            if ( event.keyCode === ENTER_KEY ) {
-              valueAccessor().call( this, data, event );
-            }
-          };
-          newValueAccessor = function() {
-            return {
-              keyup: wrappedHandler
-            };
-          };
-          ko.bindingHandlers.event.init( element, newValueAccessor, allBindingsAccessor, data );
-        }
-      };
-
-      $.put = function(url, data, fun){$.ajax({url: url, type: 'PUT'    , data: data, success: fun});};
-      $.del = function(url, data, fun){$.ajax({url: url, type: 'DELETE' , data: data, success: fun});};
-
       $(function() {
         function BaustellenViewModel() {
           // Data
@@ -51,7 +31,11 @@ html(lang="de")
           self.baustellen = db_baustellen;
           self.baustelle = ko.observable();
           self.newItem = ko.observable();
-          self.editing = ko.observable(false);
+
+          // extend model by an editing field
+          ko.utils.arrayForEach(self.baustellen(), function(item){
+            item.editing = ko.observable(false);
+          });
 
           // Operations
           self.addItem = function() {
@@ -71,18 +55,18 @@ html(lang="de")
             });
           };
           self.editItem = function(item, event) {
-            $(event.srcElement).hide().next().show().focus();
-            self.editing(true);
+            item.editing(true);
           };
           self.stopEditing = function(item, event) {
-            $(event.srcElement).hide().prev().show();
+            item.editing(false);
             // remove the item, if it is now empty
             if(!item.name().trim()) {
-              self.editing(false);
               self.removeItem(item);
             }else{
+              var tmp = item.editing;
+              delete item.editing; // don't save this helper field
               $.put(url, item, function(data){
-                self.editing(false);
+                item.editing = tmp; // restore field
                 console.log("saved "+data._id);
               });
             }
@@ -109,8 +93,8 @@ html(lang="de")
         ul(data-bind="foreach: baustellen, visible: baustellen().length > 0")
           li
             a(data-bind="click: $parent.removeItem"): i.icon-trash 
-            span(data-bind="text: name, event: { dblclick: $parent.editItem }")
-            input.hide(data-bind="value: name, valueUpdate: 'afterkeydown', enterKey: $parent.stopEditing, event: { blur: $parent.stopEditing }")
+            span(data-bind="visible: !editing(), text: name, event: { dblclick: $parent.editItem }")
+            input(data-bind="visible: editing(), value: name, hasfocus: editing(), valueUpdate: 'afterkeydown', enterKey: $parent.stopEditing, event: { blur: $parent.stopEditing }")
             a.pull-right(data-bind="click: $parent.removeItem"): i.icon-trash
         form(data-bind="submit: addItem", onsubmit="$(this).find('input:first').focus()")
           .input-append
