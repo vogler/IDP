@@ -52,18 +52,33 @@ db.open (err, db) ->
 # collections
 baustellen = db.collection("baustellen")
 # REST
+app.get "/db", (req, res) ->
+  db.collectionNames (err, items) ->
+    res.json items
+
 app.get "/db/:collection", (req, res) ->
   db.collection(req.params.collection).findItems (err, items) ->
     res.json items
 
 app.del "/db/:collection", (req, res) ->
   db.collection(req.params.collection).removeById req.body._id, (err, result) ->
-    res.send req.body._id
+    console.log 'del', req.body
+    res.send req.body
 
 app.post "/db/:collection", (req, res) ->
-  db.collection(req.params.collection).insert req.body, (err, items) ->
-    console.log req.body
+  # just use post>save instead of post>insert and put>update?
+  # problem: save somehow doesn't update but inserts another doc with the same _id -> bad
+  db.collection(req.params.collection).insert req.body, (err, result) ->
+    console.log 'post', req.body
     res.json req.body
+
+app.put "/db/:collection", (req, res) ->
+  # doesn't update anything?!
+  # db.collection(req.params.collection).updateById req.body._id, req.body, (err, result) ->
+  db.collection(req.params.collection).removeById req.body._id, (err, result) ->
+    db.collection(req.params.collection).insert req.body, (err, result) ->
+      console.log 'put', req.body
+      res.json req.body
 
 
 # routes

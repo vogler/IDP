@@ -6,7 +6,7 @@ __Server:__
 [express](http://expressjs.com/),
 [jade](http://jade-lang.com/),
 [stylus](http://learnboost.github.com/stylus/),
-[connect-assets](https://github.com/TrevorBurnham/connect-assets)
+[connect-assets](https://github.com/TrevorBurnham/connect-assets),
 [CoffeeScript](http://coffeescript.org/),
 [MongoDB](http://www.mongodb.org/),
 [mongoskin](https://github.com/kissjs/node-mongoskin)

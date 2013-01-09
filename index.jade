@@ -29,24 +29,54 @@ html(lang="de")
           self.baustellen = db_baustellen;
           self.baustelle = ko.observable();
           self.newItem = ko.observable();
+          self.editing = ko.observable(false);
 
           // Operations
-          self.addTask = function() {
+          self.addItem = function() {
             var name = this.newItem();
             $.post('/db/baustellen', {name: name}, function(data){
               self.baustellen.push(data);
+              // update mapping (makes fields of new data observable too)
+              ko.mapping.fromJS(ko.mapping.toJS(self.baustellen), self.baustellen);
               self.newItem("");
+              console.log("added "+data._id);
             });
+            $.put('buh');
           };
-          self.removeTask = function(item) {
+          self.removeItem = function(item) {
             $.ajax({
               url: '/db/baustellen',
               type: 'DELETE',
               data: item,
-              success: function(result){
+              success: function(data){
                 self.baustellen.remove(item); // destroy
+                console.log("removed "+data._id);
               }
             });
+          };
+          self.editItem = function( item ) {
+            self.editing(true);
+          };
+          self.stopEditing = function( item ) {
+            // remove the item, if it is now empty
+            if(!item.name().trim()) {
+              self.editing(false);
+              self.removeItem(item);
+            }else{
+              $.ajax({
+                url: '/db/baustellen',
+                type: 'PUT',
+                data: item,
+                success: function(data){
+                  self.editing(false);
+                  console.log("saved "+data._id);
+                }
+              });
+              //- $.post('/db/baustellen', item, function(data){
+              //-   self.editing(false);
+              //-   console.log("saved "+data._id);
+              //- });
+            }
           };
         }
 
@@ -69,11 +99,13 @@ html(lang="de")
       .modal-body
         ul(data-bind="foreach: baustellen, visible: baustellen().length > 0")
           li
-            a(data-bind="click: $parent.removeTask"): i.icon-trash
-            span(data-bind="text: name")
-        form(data-bind="submit: addTask")
+            a(data-bind="click: $parent.removeItem"): i.icon-trash 
+            span(data-bind="text: name, visible: !$parent.editing(), event: { dblclick: $parent.editItem }")
+            input(data-bind="value: name, visible: $parent.editing(), valueUpdate: 'afterkeydown', enterKey: $parent.stopEditing, event: { blur: $parent.stopEditing }")
+            a.pull-right(data-bind="click: $parent.removeItem"): i.icon-trash
+        form(data-bind="submit: addItem", onsubmit="$(this).find('input:first').focus()")
           .input-append
-            input.span2(type='text', data-bind="value: newItem", placeholder='Name...')
+            input.span2(type='text', data-bind="value: newItem", placeholder='Name...', autofocus)
             a.btn(onclick="$(this).parents('form:first').submit()"): i.icon-plus
             input.btn(type='submit', value='hinzufügen')
     #controls.ui-accordion.ui-widget.ui-helper-reset
