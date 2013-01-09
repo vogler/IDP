@@ -40,12 +40,13 @@ html(lang="de")
           // Operations
           self.addItem = function() {
             var name = this.newItem();
-            $.post(url, {name: name}, function(data){
-              self.baustellen.push(data);
-              // update mapping (makes fields of new data observable too)
+            $.post(url, {name: name}, function(item){
+              item.editing = ko.observable(false);
+              self.baustellen.push(item);
+              // update mapping (makes fields of new item observable too)
               ko.mapping.fromJS(ko.mapping.toJS(self.baustellen), self.baustellen);
               self.newItem("");
-              console.log("added "+data._id);
+              console.log("added "+item._id);
             });
           };
           self.removeItem = function(item) {
@@ -55,14 +56,16 @@ html(lang="de")
             });
           };
           self.editItem = function(item, event) {
+            self.oldItem = ko.toJSON(item); // store old state
             item.editing(true);
           };
           self.stopEditing = function(item, event) {
+            if(!item.editing()) return; // ignore blur after enter
             item.editing(false);
             // remove the item, if it is now empty
             if(!item.name().trim()) {
               self.removeItem(item);
-            }else{
+            } else if(ko.toJSON(item) != self.oldItem) { // only update on change
               var tmp = item.editing;
               delete item.editing; // don't save this helper field
               $.put(url, item, function(data){
