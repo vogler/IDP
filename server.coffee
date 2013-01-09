@@ -62,21 +62,21 @@ app.get "/db/:collection", (req, res) ->
 
 app.del "/db/:collection", (req, res) ->
   db.collection(req.params.collection).removeById req.body._id, (err, result) ->
-    console.log 'del', req.body
+    console.log 'del ', req.params.collection, req.body
     res.send req.body
 
 # updates if _id is set (one can simply use post>save instead of post>insert and put>update)
 app.post "/db/:collection", (req, res) ->
   req.body._id = db.ObjectID.createFromHexString(req.body._id) if req.body._id
   db.collection(req.params.collection).save req.body, (err, result) ->
-    console.log 'post', req.body
+    console.log 'post', req.params.collection, req.body
     res.json req.body
 
 # offered to remain RESTful
 app.put "/db/:collection", (req, res) ->
   req.body._id = db.ObjectID.createFromHexString(req.body._id)
   db.collection(req.params.collection).updateById req.body._id, req.body, (err, result) ->
-    console.log 'put', req.body
+    console.log 'put ', req.params.collection, req.body
     res.json req.body
 
 
