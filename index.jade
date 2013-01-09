@@ -18,12 +18,15 @@ html(lang="de")
     != js('index')
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script
+      $.put = function(url, data, fun){$.ajax({url: url, type: 'PUT'    , data: data, success: fun});};
+      $.del = function(url, data, fun){$.ajax({url: url, type: 'DELETE' , data: data, success: fun});};
       $(function() {
         function BaustellenViewModel() {
           // Data
           var self = this;
+          var url = '/db/baustellen';
           //- self.baustellen = ko.observable([]);
-          //- $.getJSON("/db/baustellen", function(data) {
+          //- $.getJSON(url, function(data) {
           //-   self.baustellen(data);
           //- });    
           self.baustellen = db_baustellen;
@@ -34,7 +37,7 @@ html(lang="de")
           // Operations
           self.addItem = function() {
             var name = this.newItem();
-            $.post('/db/baustellen', {name: name}, function(data){
+            $.post(url, {name: name}, function(data){
               self.baustellen.push(data);
               // update mapping (makes fields of new data observable too)
               ko.mapping.fromJS(ko.mapping.toJS(self.baustellen), self.baustellen);
@@ -44,14 +47,9 @@ html(lang="de")
             $.put('buh');
           };
           self.removeItem = function(item) {
-            $.ajax({
-              url: '/db/baustellen',
-              type: 'DELETE',
-              data: item,
-              success: function(data){
-                self.baustellen.remove(item); // destroy
-                console.log("removed "+data._id);
-              }
+            $.del(url, item, function(data){
+              self.baustellen.remove(item); // destroy
+              console.log("removed "+data._id);
             });
           };
           self.editItem = function( item ) {
@@ -63,19 +61,10 @@ html(lang="de")
               self.editing(false);
               self.removeItem(item);
             }else{
-              $.ajax({
-                url: '/db/baustellen',
-                type: 'PUT',
-                data: item,
-                success: function(data){
-                  self.editing(false);
-                  console.log("saved "+data._id);
-                }
+              $.put(url, item, function(data){
+                self.editing(false);
+                console.log("saved "+data._id);
               });
-              //- $.post('/db/baustellen', item, function(data){
-              //-   self.editing(false);
-              //-   console.log("saved "+data._id);
-              //- });
             }
           };
         }

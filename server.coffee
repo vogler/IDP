@@ -65,20 +65,19 @@ app.del "/db/:collection", (req, res) ->
     console.log 'del', req.body
     res.send req.body
 
+# updates if _id is set (one can simply use post>save instead of post>insert and put>update)
 app.post "/db/:collection", (req, res) ->
-  # just use post>save instead of post>insert and put>update?
-  # problem: save somehow doesn't update but inserts another doc with the same _id -> bad
-  db.collection(req.params.collection).insert req.body, (err, result) ->
+  req.body._id = db.ObjectID.createFromHexString(req.body._id) if req.body._id
+  db.collection(req.params.collection).save req.body, (err, result) ->
     console.log 'post', req.body
     res.json req.body
 
+# offered to remain RESTful
 app.put "/db/:collection", (req, res) ->
-  # doesn't update anything?!
-  # db.collection(req.params.collection).updateById req.body._id, req.body, (err, result) ->
-  db.collection(req.params.collection).removeById req.body._id, (err, result) ->
-    db.collection(req.params.collection).insert req.body, (err, result) ->
-      console.log 'put', req.body
-      res.json req.body
+  req.body._id = db.ObjectID.createFromHexString(req.body._id)
+  db.collection(req.params.collection).updateById req.body._id, req.body, (err, result) ->
+    console.log 'put', req.body
+    res.json req.body
 
 
 # routes
