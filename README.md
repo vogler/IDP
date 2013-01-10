@@ -26,8 +26,12 @@ __Client:__
 
 #Start
     mongod
-    node server
+    coffee server
 
 Alternatively (reloads on changes):
 
-    nodemon server.js
+    nodemon server.coffee
+
+A JS version can be compiled using:
+
+    coffee -c server
