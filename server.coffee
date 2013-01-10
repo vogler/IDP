@@ -94,7 +94,7 @@ app.get "/", (req, res) ->
         baustellen: items
 
 app.get "/maps", (req, res) ->
-  fs.readdir pathMaps, (err, files) ->
+  fs.readdir pathMaps + 'json/', (err, files) ->
     res.json files
 
 app.get "/map/:file", (req, res) ->
@@ -107,7 +107,11 @@ app.get "/map/:file", (req, res) ->
     if err
       res.send 404
       return
-    res.json JSON.parse data
+    # res.json JSON.parse data
+    track = JSON.parse data
+    db.collection('gates').findItems file: file, (err, items) ->
+      gates = items.map (x) -> x.path
+      res.json gates: gates, track: track
 
 app.post "/upload", (req, res) ->
   file = req.files.map
@@ -126,7 +130,7 @@ app.post "/upload", (req, res) ->
         # eyes.inspect(result);
         track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
           lat: x.$.lat
-          lon: x.$.lon
+          lng: x.$.lon
           ele: x.ele[0]
           time: x.time[0]
         )

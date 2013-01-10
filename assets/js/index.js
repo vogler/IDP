@@ -150,19 +150,33 @@ function loadMap(file){
   anim_stop();
   //- '/map?file=' somehow breaks syntax highlighting for Jade
   $.getJSON('/map/' + file, {}, function(json){
+      // track
       var bounds = new google.maps.LatLngBounds();
-      var coords = json.map(function(x){
-        var ll = new google.maps.LatLng(x.lat,x.lon);
+      var coords = json.track.map(function(x){
+        var ll = new google.maps.LatLng(x.lat,x.lng);
         bounds.extend(ll);
         return ll;
       });
       path.setPath(coords);
       map.fitBounds(bounds);
-      $('#time_start').text(Date.create(json.first().time).long('de'));
-      $('#time_end').text(Date.create(json.last().time).long('de'));
+
+      // gates
+      json.gates.each(function(path){
+        var line = new google.maps.Polyline({
+          path: path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}),
+          strokeColor: '#FF00FF',
+          strokeOpacity: 0.8,
+          strokeWeight: 5,
+          map: map
+        });
+      });
+
+      // UI
+      $('#time_start').text(Date.create(json.track.first().time).long('de'));
+      $('#time_end').text(Date.create(json.track.last().time).long('de'));
       $('#time_duration').text(
         Date.create(
-          Date.range(json.first().time, json.last().time).duration()
+          Date.range(json.track.first().time, json.track.last().time).duration()
         ).addHours(-1).format('{24hr}:{mm}')
       );
   });
