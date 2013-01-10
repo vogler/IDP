@@ -109,8 +109,31 @@ app.get "/map/:file", (req, res) ->
       return
     # res.json JSON.parse data
     track = JSON.parse data
-    db.collection('gates').findItems file: file, (err, items) ->
+    db.collection('gates').findItems (err, items) -> # file: file, 
       gates = items.map (x) -> x.path
+      # calculate intersections
+      time = 0
+      track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
+        # m1 = (b.lat-a.lat) / (b.lng-a.lng)
+        # t1 = a.lat - m1*a.lng
+        duration = (Date.parse(b.time)-Date.parse(a.time))/1000
+        time += duration
+        gates.forEach (path) -> # TODO optimization: check bounds to skip calculations?
+          path.reduce (c, d, i, arr) ->
+            # m2 = (d.lat-c.lat) / (d.lng-c.lng)
+            # t2 = c.lat - m2*c.lng
+            N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
+            s = ((c.lng-a.lng) * (d.lat-c.lat) - (c.lat-a.lat) * (d.lng-c.lng)) / N
+            t = (a.lng-c.lng + s*(b.lng-a.lng)) / (d.lng-c.lng)
+            # check if the intersection is on the line segments
+            if 0 <= s <= 1 and 0 <= t <= 1
+              point =
+                lng: a.lng + s*(b.lng-a.lng)
+                lat: a.lat + s*(b.lat-a.lat)
+              # console.log 'found intersection:', point
+              console.log 'intersection at', time, 's for', duration, 's'
+            d
+        b
       res.json gates: gates, track: track
 
 app.post "/upload", (req, res) ->

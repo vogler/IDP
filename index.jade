@@ -47,13 +47,13 @@ html(lang="de")
               // update mapping (makes fields of new item observable too)
               ko.mapping.fromJS(ko.mapping.toJS(self.baustellen), self.baustellen);
               self.newItem("");
-              console.log("added "+item._id);
+              console.log("added", item._id);
             });
           };
           self.removeItem = function(item) {
             $.del(url, item, function(data){
               self.baustellen.remove(item); // destroy marks for deletion
-              console.log("removed "+data._id);
+              console.log("removed", data._id);
             });
           };
           self.editItem = function(item, event) {
@@ -71,7 +71,7 @@ html(lang="de")
               delete item.editing; // don't save this helper field
               $.put(url, item, function(data){
                 item.editing = tmp; // restore field
-                console.log("saved "+data._id);
+                console.log("saved", data._id);
               });
             }
           };
@@ -112,14 +112,16 @@ html(lang="de")
           input#fileUpload(type='file', name='map')
       h3 Baustelle
       div
-        select(data-bind="options: baustellen, optionsCaption: 'wählen...', optionsText: 'name', value: baustelle")
-        a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
-        ul
-          li Plaene
-          li Gates 
+        form.form-inline
+          select.input-medium(data-bind="options: baustellen, optionsCaption: 'wählen...', optionsText: 'name', value: baustelle")
+          a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
+        ul.unstyled
+          li 
             a.btn.btn-mini#btn_gate: i.icon-plus
-          li Area 
+            |  Gates
+          li
             a.btn.btn-mini#btn_area(rel="tooltip", title="bla"): i.icon-plus
+            |  Area
       h3 LKW
       div
       h3 Karte

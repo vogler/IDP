@@ -65,7 +65,7 @@ $(document).ready(function() {
         var item = {baustelle: baustellenViewModel.baustelle(), file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
         console.log(item);
         $.post('/db/gates', item, function(item){
-          console.log("added "+item._id);
+          console.log("added", item._id);
         });
         btn.attr('disabled', false);
       });
