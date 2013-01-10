@@ -1,4 +1,4 @@
-//- globals: map, anim_follow, anim_fullPath, anim_i, anim_playing, anim_speed
+//- globals: map, anim_follow, anim_fullPath, anim_i, anim_playing, anim_speed, file
 $(document).ready(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -15,19 +15,19 @@ $(document).ready(function() {
     map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
 
     var coordinates = [
-        new google.maps.LatLng(37.772323, -122.214897),
-        new google.maps.LatLng(21.291982, -157.821856),
-        new google.maps.LatLng(-18.142599, 178.431),
-        new google.maps.LatLng(-27.46758, 153.027892)
+      new google.maps.LatLng(37.772323, -122.214897),
+      new google.maps.LatLng(21.291982, -157.821856),
+      new google.maps.LatLng(-18.142599, 178.431),
+      new google.maps.LatLng(-27.46758, 153.027892)
     ];
     path = new google.maps.Polyline({
       path: coordinates,
       strokeColor: strokeColor,
       strokeOpacity: 1.0,
       strokeWeight: strokeWeight,
+      map: map
     });
-
-    path.setMap(map);
+    loadMap(db_files().first());
   }
 
   // controls
@@ -53,17 +53,19 @@ $(document).ready(function() {
       var a = event.latLng;
       google.maps.event.addListenerOnce(map, 'click', function(event) {
         var b = event.latLng;
-        var bounds = new google.maps.LatLngBounds()
-        bounds.extend(a);
-        bounds.extend(b);
-        var rectangle = new google.maps.Rectangle({
-          strokeColor: '#FF0000',
+        var path = [a, b];
+        var line = new google.maps.Polyline({
+          path: path,
+          strokeColor: '#FF00FF',
           strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: '#FF0000',
-          fillOpacity: 0.35,
-          map: map,
-          bounds: bounds
+          strokeWeight: 5,
+          map: map
+        });
+        // TODO change model to baustelle.gates
+        var item = {baustelle: baustellenViewModel.baustelle(), file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
+        console.log(item);
+        $.post('/db/gates', item, function(item){
+          console.log("added "+item._id);
         });
         btn.attr('disabled', false);
       });
@@ -129,9 +131,7 @@ $(document).ready(function() {
 
   // stroke spinner
   $( "#stroke_spinner" ).val(strokeWeight).spinner({
-    min: 0,
-    max: 20,
-    step: 0.1,
+    min: 0, max: 20, step: 0.1,
     numberFormat: 'n',
     spin: function( event, ui ) {
       path.setOptions({strokeWeight: ui.value});
@@ -146,27 +146,26 @@ $(document).ready(function() {
 
 
 function loadMap(file){
+  window.file = file;
   anim_stop();
   //- '/map?file=' somehow breaks syntax highlighting for Jade
-  $.getJSON('/map/' + file,
-      {},
-      function(json){
-        var bounds = new google.maps.LatLngBounds();
-        var coords = json.map(function(x){
-          var ll = new google.maps.LatLng(x.lat,x.lon);
-          bounds.extend(ll);
-          return ll;
-        });
-        path.setPath(coords);
-        map.fitBounds(bounds);
-        $('#time_start').text(Date.create(json.first().time).long('de'));
-        $('#time_end').text(Date.create(json.last().time).long('de'));
-        $('#time_duration').text(
-          Date.create(
-            Date.range(json.first().time, json.last().time).duration()
-          ).addHours(-1).format('{24hr}:{mm}')
-        );
+  $.getJSON('/map/' + file, {}, function(json){
+      var bounds = new google.maps.LatLngBounds();
+      var coords = json.map(function(x){
+        var ll = new google.maps.LatLng(x.lat,x.lon);
+        bounds.extend(ll);
+        return ll;
       });
+      path.setPath(coords);
+      map.fitBounds(bounds);
+      $('#time_start').text(Date.create(json.first().time).long('de'));
+      $('#time_end').text(Date.create(json.last().time).long('de'));
+      $('#time_duration').text(
+        Date.create(
+          Date.range(json.first().time, json.last().time).duration()
+        ).addHours(-1).format('{24hr}:{mm}')
+      );
+  });
 }
 
 // animation
@@ -216,8 +215,8 @@ function geocode() {
       if (results[1]) {
         map.setZoom(11);
         marker = new google.maps.Marker({
-            position: latlng,
-            map: map
+          position: latlng,
+          map: map
         });
         infowindow.setContent(results[1].formatted_address);
         infowindow.open(map, marker);

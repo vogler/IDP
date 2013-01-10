@@ -18,6 +18,7 @@ html(lang="de")
     != js('fixes')
     != js('index')
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
+    script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
     script
       $(function() {
         function BaustellenViewModel() {
@@ -75,8 +76,8 @@ html(lang="de")
             }
           };
         }
-
-        ko.applyBindings(new BaustellenViewModel());
+        baustellenViewModel = new BaustellenViewModel();
+        ko.applyBindings(baustellenViewModel);
       });
       
 
