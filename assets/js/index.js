@@ -1,4 +1,4 @@
-//- globals: map, path, anim, file
+//- globals: map, path, anim, file, track
 $(document).ready(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -175,6 +175,7 @@ function loadMap(file){
       });
       path.setPath(coords);
       map.fitBounds(bounds);
+      track = json.track; // needed to show time in animation
 
       // UI
       $('#time_start').text(Date.create(json.startTime*1000).long('de'));
@@ -191,6 +192,10 @@ var anim = {
   fullPath: undefined,
   i: 0
 };
+function anim_updateTime(){
+  // TODO more than 24h
+  $("#anim_time").text(Date.create(track[anim.i].time.seconds()).addHours(-1).format('{24hr}:{mm}:{ss}'));
+}
 function anim_play(){
   if(!anim.playing) {
     if(!anim.i){
@@ -198,6 +203,18 @@ function anim_play(){
       anim.i = 1;
       anim_step();
     }
+    // animation timeline
+    $("#anim_timeline").slideDown();
+    $("#anim_slider").slider({
+      range: "min",
+      min: 1,
+      max: anim.fullPath.length,
+      value: anim.i,
+      slide: function( event, ui ) {
+        anim.i = ui.value;
+        anim_updateTime();
+      }
+    });
     anim.playing = setInterval('anim_step()', parseInt(5000/anim.speed));
   } else {
     anim_pause();
@@ -210,6 +227,8 @@ function anim_step(){
   if(!anim.i) return;
   path.setPath(anim.fullPath.first(anim.i));
   if(anim.follow) map.setCenter(anim.fullPath[anim.i]);
+  $("#anim_slider").slider({ value: anim.i });
+  anim_updateTime();
   anim.i++;
 }
 function anim_pause(){
@@ -221,6 +240,7 @@ function anim_stop(){
   anim.i = 0;
   if(anim.fullPath) path.setPath(anim.fullPath);
   $( "#btn_play i" ).attr('class', 'icon-play');
+  $("#anim_timeline").slideUp();
 }
 
 // geocode
