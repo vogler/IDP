@@ -93,13 +93,13 @@ html(lang="de")
       .modal-header
         button.close(data-dismiss="modal", aria-hidden="true") x
         h3 Baustellen
-      .modal-body
-        ul(data-bind="foreach: baustellen, visible: baustellen().length > 0")
+      .modal-body.span4
+        ul.unstyled(data-bind="foreach: baustellen, visible: baustellen().length > 0")
           li
-            a(data-bind="click: $parent.removeItem"): i.icon-trash 
             span(data-bind="visible: !editing(), text: name, event: { dblclick: $parent.editItem }")
             input(data-bind="visible: editing(), value: name, hasfocus: editing(), valueUpdate: 'afterkeydown', enterKey: $parent.stopEditing, event: { blur: $parent.stopEditing }")
             a.pull-right(data-bind="click: $parent.removeItem"): i.icon-trash
+            a.pull-right(data-bind="click: $parent.editItem"): i.icon-pencil
         form(data-bind="submit: addItem", onsubmit="$(this).find('input:first').focus()")
           .input-append
             input.span2(type='text', data-bind="value: newItem", placeholder='Name...', autofocus)
@@ -113,7 +113,7 @@ html(lang="de")
       h3 Baustelle
       div
         form.form-inline
-          select.input-medium(data-bind="options: baustellen, optionsCaption: 'wählen...', optionsText: 'name', value: baustelle")
+          select.input-medium(data-bind="options: baustellen, optionsCaption: 'wählen...', optionsText: 'name', value: baustelle, event:{ change: loadGates}")
           a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
         ul.unstyled
           li 
@@ -147,7 +147,7 @@ html(lang="de")
       div
         a.btn#btn_play: i.icon-play
         a.btn(onclick='anim_stop()'): i.icon-stop
-        a.btn.active(onclick='anim_follow = !anim_follow', data-toggle="button")
+        a.btn.active(onclick='anim.follow = !anim.follow', data-toggle="button")
           i.icon-move
           |  folgen
         br
@@ -163,10 +163,11 @@ html(lang="de")
         input(type='text')#stroke_spinner
         //- html5 number picker
         //- input(type="number", min="0", max="10", step=".1", value="1")
-        label.checkbox.pull-left
-          input#tooltips(type="checkbox", checked, onclick='tooltips()')
-          | Tooltips &nbsp;
-        i.icon-eye-open(onclick="tooltips('show')")
+        div
+          label.checkbox.pull-left
+            input#tooltips(type="checkbox", checked, onclick='tooltips()')
+            | Tooltips &nbsp;
+          i.icon-eye-open(onclick="tooltips('show')")
     #map_canvas
     #infoTable.span7: table.table.table-condensed
       thead

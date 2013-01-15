@@ -56,13 +56,17 @@ app.get "/db", (req, res) ->
   db.collectionNames (err, items) ->
     res.json items
 
-app.get "/db/:collection", (req, res) ->
-  db.collection(req.params.collection).findItems (err, items) ->
-    res.json items
-
-app.get "/db/:collection/:id", (req, res) ->
-  db.collection(req.params.collection).findById req.params.id, (err, item) ->
-    res.json item
+app.get "/db/:collection/:id?", (req, res) ->
+  query = if req.query.query then JSON.parse(req.query.query) else {}
+  query = _id: db.ObjectID.createFromHexString(req.params.id) if req.params.id
+  db.collection(req.params.collection).findItems query, (err, items) ->
+    if req.params.id
+      if items.length > 0
+        res.json items[0]
+      else
+        res.send 404
+    else
+      res.json items
 
 app.del "/db/:collection", (req, res) ->
   db.collection(req.params.collection).removeById req.body._id, (err, result) ->
@@ -108,18 +112,23 @@ app.get "/map/:file", (req, res) ->
       res.send 404
       return
     # res.json JSON.parse data
-    track = JSON.parse data
+    map = JSON.parse data
+    track = map.track
     db.collection('gates').findItems (err, items) -> # file: file, 
-      gates = items.map (x) -> x.path
+      # gates = items.map (x) -> x.path
+      # better automatically generate gate names in order in which they are reached
+      # bad: order changes per track
+      gates = items
       # calculate intersections
+      gate_i = 0
       time = 0
       track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
         # m1 = (b.lat-a.lat) / (b.lng-a.lng)
         # t1 = a.lat - m1*a.lng
-        duration = (Date.parse(b.time)-Date.parse(a.time))/1000
+        duration = b.time - a.time
         time += duration
-        gates.forEach (path) -> # TODO optimization: check bounds to skip calculations?
-          path.reduce (c, d, i, arr) ->
+        gates.forEach (gate) -> # TODO optimization: check bounds to skip calculations?
+          gate.path.reduce (c, d, i, arr) ->
             # m2 = (d.lat-c.lat) / (d.lng-c.lng)
             # t2 = c.lat - m2*c.lng
             N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
@@ -132,9 +141,12 @@ app.get "/map/:file", (req, res) ->
                 lat: a.lat + s*(b.lat-a.lat)
               # console.log 'found intersection:', point
               console.log 'intersection at', time, 's for', duration, 's'
+              if gate.i == undefined
+                gate_i++
+                gate.i = gate_i
             d
         b
-      res.json gates: gates, track: track
+      res.json map
 
 app.post "/upload", (req, res) ->
   file = req.files.map
@@ -151,13 +163,19 @@ app.post "/upload", (req, res) ->
       xmlParser.parseString data, (err, result) ->
         # console.dir(result);
         # eyes.inspect(result);
+        startTime = 0
         track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
+          startTime = Date.parse(x.time[0])/1000 if !startTime
           lat: x.$.lat
           lng: x.$.lon
           ele: x.ele[0]
-          time: x.time[0]
+          time: Date.parse(x.time[0])/1000-startTime
         )
-        fs.writeFile pathJson, JSON.stringify(track), (err) ->
+        map =
+          startTime: startTime
+          endTime: startTime + track[track.length-1].time
+          track: track
+        fs.writeFile pathJson, JSON.stringify(map), (err) ->
           res.redirect "back"
 
 

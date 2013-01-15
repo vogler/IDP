@@ -1,4 +1,4 @@
-//- globals: map, anim_follow, anim_fullPath, anim_i, anim_playing, anim_speed, file
+//- globals: map, path, anim, file
 $(document).ready(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -54,15 +54,9 @@ $(document).ready(function() {
       google.maps.event.addListenerOnce(map, 'click', function(event) {
         var b = event.latLng;
         var path = [a, b];
-        var line = new google.maps.Polyline({
-          path: path,
-          strokeColor: '#FF00FF',
-          strokeOpacity: 0.8,
-          strokeWeight: 5,
-          map: map
-        });
+        var line = drawLine(path);
         // TODO change model to baustelle.gates
-        var item = {baustelle: baustellenViewModel.baustelle(), file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
+        var item = {baustelle: baustellenViewModel.baustelle()._id(), file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
         console.log(item);
         $.post('/db/gates', item, function(item){
           console.log("added", item._id);
@@ -99,27 +93,26 @@ $(document).ready(function() {
   // animation
   $('#btn_play').click(function() {
     anim_play();
-    var status = anim_playing ? 'pause' : 'play';
+    var status = anim.playing ? 'pause' : 'play';
     $(this).find('i').attr('class', 'icon-'+status);
   });
 
   // speed slider
-  anim_speed = 20;
   $( "#speed_slider" ).slider({
     range: "min",
     min: 1,
     max: 100,
-    value: anim_speed,
+    value: anim.speed,
     slide: function( event, ui ) {
       $( "#speed" ).text( ui.value );
-      anim_speed = ui.value;
-      if(anim_playing){
+      anim.speed = ui.value;
+      if(anim.playing){
         anim_pause();
         anim_play();
       }
     }
   });
-  $( "#speed" ).text(anim_speed);
+  $( "#speed" ).text(anim.speed);
 
   // colorpicker
   $('#colorSelector').val(strokeColor).addClass('black').hide().miniColors({
@@ -142,8 +135,31 @@ $(document).ready(function() {
 });
 
 
+function drawLine(path){
+  return new google.maps.Polyline({
+    path: path,
+    strokeColor: '#FF00FF',
+    strokeOpacity: 0.8,
+    strokeWeight: 5,
+    map: map
+  });
+}
 
-
+function loadGates(){
+  console.log(baustellenViewModel.baustelle()._id());
+  $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
+    gates.each(function(gate){
+      var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
+      console.log(gate.i);
+      var marker = new google.maps.Marker({
+          position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
+          map: map,
+          title: 'Gate '+gate.i,
+          zIndex: gate.i
+      });
+    });
+  });
+}
 
 function loadMap(file){
   window.file = file;
@@ -160,61 +176,50 @@ function loadMap(file){
       path.setPath(coords);
       map.fitBounds(bounds);
 
-      // gates
-      json.gates.each(function(path){
-        var line = new google.maps.Polyline({
-          path: path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}),
-          strokeColor: '#FF00FF',
-          strokeOpacity: 0.8,
-          strokeWeight: 5,
-          map: map
-        });
-      });
-
       // UI
-      $('#time_start').text(Date.create(json.track.first().time).long('de'));
-      $('#time_end').text(Date.create(json.track.last().time).long('de'));
-      $('#time_duration').text(
-        Date.create(
-          Date.range(json.track.first().time, json.track.last().time).duration()
-        ).addHours(-1).format('{24hr}:{mm}')
-      );
+      $('#time_start').text(Date.create(json.startTime*1000).long('de'));
+      $('#time_end').text(Date.create(json.endTime*1000).long('de'));
+      $('#time_duration').text((json.endTime-json.startTime).seconds().duration('de'));
   });
 }
 
 // animation
-var anim_playing = false;
-var anim_follow = true;
-var anim_fullPath, anim_i;
+var anim = {
+  playing: false, 
+  follow: true,
+  speed: 20,
+  fullPath: undefined,
+  i: 0
+};
 function anim_play(){
-  if(!anim_playing) {
-    if(!anim_i){
-      anim_fullPath = path.getPath().getArray();
-      anim_i = 1;
+  if(!anim.playing) {
+    if(!anim.i){
+      anim.fullPath = path.getPath().getArray();
+      anim.i = 1;
       anim_step();
     }
-    anim_playing = setInterval('anim_step()', parseInt(5000/anim_speed));
+    anim.playing = setInterval('anim_step()', parseInt(5000/anim.speed));
   } else {
     anim_pause();
   }
 }
 function anim_step(){
-  if(anim_i >= anim_fullPath.length) {
+  if(anim.i >= anim.fullPath.length) {
     anim_stop();
   }
-  if(!anim_i) return;
-  path.setPath(anim_fullPath.first(anim_i));
-  if(anim_follow) map.setCenter(anim_fullPath[anim_i]);
-  anim_i++;
+  if(!anim.i) return;
+  path.setPath(anim.fullPath.first(anim.i));
+  if(anim.follow) map.setCenter(anim.fullPath[anim.i]);
+  anim.i++;
 }
 function anim_pause(){
-  clearInterval(anim_playing);
-  anim_playing = false;
+  clearInterval(anim.playing);
+  anim.playing = false;
 }
 function anim_stop(){
   anim_pause();
-  anim_i = 0;
-  if(anim_fullPath) path.setPath(anim_fullPath);
+  anim.i = 0;
+  if(anim.fullPath) path.setPath(anim.fullPath);
   $( "#btn_play i" ).attr('class', 'icon-play');
 }
 
