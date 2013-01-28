@@ -126,14 +126,16 @@ html(lang="de")
       div
       h3 Karte
       div
-        | Start: 
-        span#time_start
+        | Datum: 
+        small#time_date
         br
-        | Ende: 
-        span#time_end
+        | Start: 
+        small#time_start
+        |  | Ende: 
+        small#time_end
         br
         | Dauer: 
-        span#time_duration
+        small#time_duration
         br
         a.btn(onclick='geocode()')
           i.icon-flag

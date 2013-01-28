@@ -106,17 +106,15 @@ app.get "/map/:file", (req, res) ->
   console.log file
   path = pathMaps + 'json/' + file
   # readStream = fs.createReadStream path
-  # util.pump readStream, res
-  fs.readFile path, (err, data) -> # slower than above (streaming and no whitespace) but nicer output
+  # util.pump readStream, res # fast, streaming, no whitespaces
+  fs.readFile path, (err, data) ->
     if err
       res.send 404
       return
-    # res.json JSON.parse data
     map = JSON.parse data
     # calculate intersections
     db.collection('gates').findItems (err, gates) -> # file: file, 
       map.intersections = []
-      # gate_i = 0
       time = 0
       map.track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
         # m1 = (b.lat-a.lat) / (b.lng-a.lng)
@@ -130,17 +128,14 @@ app.get "/map/:file", (req, res) ->
             N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
             s = ((c.lng-a.lng) * (d.lat-c.lat) - (c.lat-a.lat) * (d.lng-c.lng)) / N
             t = (a.lng-c.lng + s*(b.lng-a.lng)) / (d.lng-c.lng)
-            # check if the intersection is on the line segments
+            # check if the intersection is on the line segment
             if 0 <= s <= 1 and 0 <= t <= 1
               point =
                 lng: a.lng + s*(b.lng-a.lng)
                 lat: a.lat + s*(b.lat-a.lat)
-              # console.log 'found intersection at', point
+              # console.log 'intersection at', point
               # console.log 'intersection at', time, 's for', duration, 's'
               map.intersections.push time: time, gate: gate._id # chronological
-              # if gate.i == undefined
-              #   gate_i++
-              #   gate.i = gate_i
               # if gate.intersections == undefined
               #   gate.intersections = []
               # gate.intersections.push time
@@ -148,9 +143,16 @@ app.get "/map/:file", (req, res) ->
         b
       map.stats = {}
       map.intersections.reduce (a, b, i, arr) ->
-        map.stats[a.gate] = [] if map.stats[a.gate] == undefined
-        map.stats[a.gate].push to: b.gate, time: b.time-a.time
+        map.stats[a.gate] = {} if map.stats[a.gate] == undefined
+        map.stats[a.gate][b.gate] = times: [] if map.stats[a.gate][b.gate] == undefined
+        map.stats[a.gate][b.gate].times.push b.time-a.time
         b
+      for g1,v1 of map.stats
+        console.log g1
+        for g2,v2 of v1
+          sum = v2.times.reduce (a,b) -> a+b
+          console.log "\t", g2, sum
+          v2.mean = sum/v2.times.length
       # map.gates = gates
       map.meanDuration = time/map.track.length
       res.json map

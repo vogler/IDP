@@ -178,8 +178,9 @@ function loadMap(file){
       track = json.track; // needed to show time in animation
 
       // UI
-      $('#time_start').text(Date.create(json.startTime*1000).long('de'));
-      $('#time_end').text(Date.create(json.endTime*1000).long('de'));
+      $('#time_date').text(Date.create(json.startTime*1000).short('de'));
+      $('#time_start').text(Date.create(json.startTime*1000).format('{24hr}:{mm}'));
+      $('#time_end').text(Date.create(json.endTime*1000).format('{24hr}:{mm}'));
       $('#time_duration').text((json.endTime-json.startTime).seconds().duration('de'));
   });
 }
