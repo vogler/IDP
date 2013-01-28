@@ -190,7 +190,14 @@ var anim = {
   follow: true,
   speed: 20,
   fullPath: undefined,
-  i: 0
+  i: 0,
+  curPosMarker: new google.maps.Circle({
+      strokeColor: '#FF0000',
+      strokeWeight: 3,
+      fillColor: '#FF0000',
+      fillOpacity: 0.5,
+      radius: 15
+    })
 };
 function anim_updateTime(){
   // TODO more than 24h
@@ -215,7 +222,9 @@ function anim_play(){
         anim_updateTime();
       }
     });
-    anim.playing = setInterval('anim_step()', parseInt(5000/anim.speed));
+    // current position marker
+    anim.curPosMarker.setMap(map);
+    anim.playing = setInterval('anim_step()', parseInt(5000/anim.speed)); // TODO not all tracks have 5s steps
   } else {
     anim_pause();
   }
@@ -227,6 +236,7 @@ function anim_step(){
   if(!anim.i) return;
   path.setPath(anim.fullPath.first(anim.i));
   if(anim.follow) map.setCenter(anim.fullPath[anim.i]);
+  anim.curPosMarker.setCenter(anim.fullPath[anim.i]);
   $("#anim_slider").slider({ value: anim.i });
   anim_updateTime();
   anim.i++;
@@ -239,6 +249,8 @@ function anim_stop(){
   anim_pause();
   anim.i = 0;
   if(anim.fullPath) path.setPath(anim.fullPath);
+  // remove current position marker
+  anim.curPosMarker.setMap(null);
   $( "#btn_play i" ).attr('class', 'icon-play');
   $("#anim_timeline").slideUp();
 }

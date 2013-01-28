@@ -113,16 +113,12 @@ app.get "/map/:file", (req, res) ->
       return
     # res.json JSON.parse data
     map = JSON.parse data
-    track = map.track
-    db.collection('gates').findItems (err, items) -> # file: file, 
-      # gates = items.map (x) -> x.path
-      # better automatically generate gate names in order in which they are reached
-      # bad: order changes per track
-      gates = items
-      # calculate intersections
-      gate_i = 0
+    # calculate intersections
+    db.collection('gates').findItems (err, gates) -> # file: file, 
+      map.intersections = []
+      # gate_i = 0
       time = 0
-      track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
+      map.track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
         # m1 = (b.lat-a.lat) / (b.lng-a.lng)
         # t1 = a.lat - m1*a.lng
         duration = b.time - a.time
@@ -139,13 +135,24 @@ app.get "/map/:file", (req, res) ->
               point =
                 lng: a.lng + s*(b.lng-a.lng)
                 lat: a.lat + s*(b.lat-a.lat)
-              # console.log 'found intersection:', point
-              console.log 'intersection at', time, 's for', duration, 's'
-              if gate.i == undefined
-                gate_i++
-                gate.i = gate_i
+              # console.log 'found intersection at', point
+              # console.log 'intersection at', time, 's for', duration, 's'
+              map.intersections.push time: time, gate: gate._id # chronological
+              # if gate.i == undefined
+              #   gate_i++
+              #   gate.i = gate_i
+              # if gate.intersections == undefined
+              #   gate.intersections = []
+              # gate.intersections.push time
             d
         b
+      map.stats = {}
+      map.intersections.reduce (a, b, i, arr) ->
+        map.stats[a.gate] = [] if map.stats[a.gate] == undefined
+        map.stats[a.gate].push to: b.gate, time: b.time-a.time
+        b
+      # map.gates = gates
+      map.meanDuration = time/map.track.length
       res.json map
 
 app.post "/upload", (req, res) ->
