@@ -136,15 +136,12 @@ app.get "/map/:file", (req, res) ->
               # console.log 'intersection at', point
               # console.log 'intersection at', time, 's for', duration, 's'
               map.intersections.push time: time, gate: gate._id # chronological
-              # if gate.intersections == undefined
-              #   gate.intersections = []
-              # gate.intersections.push time
             d
         b
       map.stats = {}
       map.intersections.reduce (a, b, i, arr) ->
-        map.stats[a.gate] = {} if map.stats[a.gate] == undefined
-        map.stats[a.gate][b.gate] = times: [] if map.stats[a.gate][b.gate] == undefined
+        map.stats[a.gate] ?= {}
+        map.stats[a.gate][b.gate] ?= times: []
         map.stats[a.gate][b.gate].times.push b.time-a.time
         b
       for g1,v1 of map.stats
