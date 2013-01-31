@@ -20,6 +20,7 @@ html(lang="de")
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
     script
+      stats2 = ko.mapping.fromJS([]);
       $(function() {
         function BaustellenViewModel() {
           // Data
@@ -176,25 +177,31 @@ html(lang="de")
         | 0:00
       #anim_slider
     #infoTable.span7: table.table.table-condensed
+      //- thead
+      //-   tr
+      //-     th Truck
+      //-     th(colspan=2) Dumper 1
+      //-     th(colspan=2) Dumper 2
+      //-   tr
+      //-     th Segment
+      //-     th Gate 1 to 1
+      //-     th Gate 1 to 3
+      //-     th Gate 1 to 1
+      //-     th Gate 1 to 3
+      //- tbody
+      //-   each s in [1,2,3,4]
+      //-     tr
+      //-       td Segment time #{s}
+      //-       td 2:30
+      //-       td 2:30
+      //-       td 2:30
+      //-       td 2:30
       thead
-        tr
-          th Truck
-          th(colspan=2) Dumper 1
-          th(colspan=2) Dumper 2
-        tr
-          th Segment
-          th Gate 1 to 1
-          th Gate 1 to 3
-          th Gate 1 to 1
-          th Gate 1 to 3
+        tr(data-bind="foreach: stats2")
+          th(data-bind="text: from()+' zu '+to()")
       tbody
-        each s in [1,2,3,4]
-          tr
-            td Segment time #{s}
-            td 2:30
-            td 2:30
-            td 2:30
-            td 2:30
+        tr(data-bind="foreach: stats2")
+          td(data-bind="text: Math.round(mean())")
     #files
       each f in files
         a(href="javascript: loadMap('"+f+"')")= f

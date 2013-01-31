@@ -55,12 +55,17 @@ $(document).ready(function() {
         var b = event.latLng;
         var path = [a, b];
         var line = drawLine(path);
-        // TODO change model to baustelle.gates
-        var item = {baustelle: baustellenViewModel.baustelle()._id(), file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
-        console.log(item);
-        $.post('/db/gates', item, function(item){
-          console.log("added", item._id);
+
+        // TODO hack
+        $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
+          // TODO change model to baustelle.gates
+          var item = {baustelle: baustellenViewModel.baustelle()._id(), i: gates.length, file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
+          console.log(item);
+          $.post('/db/gates', item, function(item){
+            console.log("added", item._id);
+          });
         });
+
         btn.attr('disabled', false);
       });
     });
@@ -155,7 +160,7 @@ function loadGates(){
           position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
           map: map,
           title: 'Gate '+gate.i,
-          zIndex: gate.i
+          zIndex: parseInt(gate.i)+9
       });
     });
   });
@@ -182,6 +187,9 @@ function loadMap(file){
       $('#time_start').text(Date.create(json.startTime*1000).format('{24hr}:{mm}'));
       $('#time_end').text(Date.create(json.endTime*1000).format('{24hr}:{mm}'));
       $('#time_duration').text((json.endTime-json.startTime).seconds().duration('de'));
+
+      // stats
+      ko.mapping.fromJS(json.stats2, stats2);
   });
 }
 

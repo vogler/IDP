@@ -135,7 +135,7 @@ app.get "/map/:file", (req, res) ->
                 lat: a.lat + s*(b.lat-a.lat)
               # console.log 'intersection at', point
               # console.log 'intersection at', time, 's for', duration, 's'
-              map.intersections.push time: time, gate: gate._id # chronological
+              map.intersections.push time: time, gate: gate.i # chronological
             d
         b
       map.stats = {}
@@ -144,12 +144,14 @@ app.get "/map/:file", (req, res) ->
         map.stats[a.gate][b.gate] ?= times: []
         map.stats[a.gate][b.gate].times.push b.time-a.time
         b
+      map.stats2 ?= []
       for g1,v1 of map.stats
         console.log g1
         for g2,v2 of v1
           sum = v2.times.reduce (a,b) -> a+b
           console.log "\t", g2, sum
           v2.mean = sum/v2.times.length
+          map.stats2.push from: g1, to: g2, mean: v2.mean
       # map.gates = gates
       map.meanDuration = time/map.track.length
       res.json map
