@@ -180,11 +180,14 @@ function loadGates(){
   });
 }
 
-function loadMap(file){
+function loadMap(file){ // reloads if file is undefined
+  if(!file) file = window.file
   window.file = file;
   anim_stop();
+  // var excluded = $('#gates :not(.active)').map(function(){return $(this).attr("i")}); // can't convert to JSON because of jQuery's circular structures
+  var excluded = $.map($('#gates :not(.active)'), function(x){return $(x).attr("i")});
   //- '/map?file=' somehow breaks syntax highlighting for Jade
-  $.getJSON('/map/' + file, {}, function(json){
+  $.getJSON('/map/' + file, {excluded: JSON.stringify(excluded)}, function(json){
       // track
       var bounds = new google.maps.LatLngBounds();
       var coords = json.track.map(function(x){

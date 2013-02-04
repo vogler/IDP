@@ -102,6 +102,8 @@ app.get "/maps", (req, res) ->
     res.json files
 
 app.get "/map/:file", (req, res) ->
+  excluded = if req.query.excluded then JSON.parse(req.query.excluded) else []
+  console.log excluded, req.query
   file = req.params.file
   console.log file
   path = pathMaps + 'json/' + file
@@ -121,7 +123,10 @@ app.get "/map/:file", (req, res) ->
         # t1 = a.lat - m1*a.lng
         duration = b.time - a.time
         time += duration
-        gates.forEach (gate) -> # TODO optimization: check bounds to skip calculations?
+        for gate in gates # TODO optimization: check bounds to skip calculations?
+          # gate.i = parseInt(gate.i)
+          if gate.i in excluded
+            continue
           gate.path.reduce (c, d, i, arr) ->
             # m2 = (d.lat-c.lat) / (d.lng-c.lng)
             # t2 = c.lat - m2*c.lng
@@ -162,7 +167,10 @@ app.get "/map/:file", (req, res) ->
                    ['Mittel'].concat(map.stats.info.map (x) -> x.mean),
                    ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),
                    ['Zeiten'].concat(map.stats.info.map (x) -> x.times),]
-      map.stats.gates = gates.map (x) -> x.i
+      map.stats.allGates = gates.map (x) -> x.i
+      map.stats.intersectedGates = map.stats.info.reduce ((a,b) ->
+        f = (x,y) -> if x in y then y else y.concat(x) # unique append
+        f b.from, (f b.to, a)), []
       map.meanDuration = Math.round(time/map.track.length)
       res.json map
 

@@ -20,7 +20,7 @@ html(lang="de")
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
     script
-      stats = ko.mapping.fromJS({info: [], table: [], gates: []});
+      stats = ko.mapping.fromJS({info: [], table: [], allGates: [], intersectedGates: []});
       $(function() {
         function BaustellenViewModel() {
           // Data
@@ -80,12 +80,13 @@ html(lang="de")
         baustellenViewModel = new BaustellenViewModel();
         ko.applyBindings(baustellenViewModel);
       });
-
+      
       function formatRowContent(data, index, row){
         if(!index || row == 'Anzahl') return data;
-        return (data instanceof Array)
-          ? data.map(function(x){return duration(x)}).join('<br>')
-          : duration(data);
+        if(data instanceof Array)
+          return data.map(function(x){return duration(x)}).join('<br>');
+        else
+          return duration(data);
       }
 
   body
@@ -148,8 +149,12 @@ html(lang="de")
           i.icon-flag
           |  reverse geocode
       h3 Gates
-      div(data-bind="foreach: stats.gates")
-        a.btn.active(data-toggle="button", data-bind="text: markers[$data].name")
+      #gates(data-bind="foreach: stats.allGates")
+        //- TODO fix bugs:
+        //- .active is added after onclick -> one behind
+        //- don't disable excluded gates (keep initial intersectedGates)
+        //- click in data-bind doesn't work (maybe because no binding was applied)
+        a.btn.active(data-toggle="button", data-bind="text: markers[$data].name, attr: {i: $data}, css: {disabled: stats.intersectedGates().indexOf($data)==-1}", onclick="if(!$(this).hasClass('disabled')) loadMap()")
       h3 Filter
       div
         ul
