@@ -20,7 +20,7 @@ html(lang="de")
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
     script
-      stats2 = ko.mapping.fromJS([]);
+      stats = ko.mapping.fromJS({info: [], table: [], gates: []});
       $(function() {
         function BaustellenViewModel() {
           // Data
@@ -80,7 +80,13 @@ html(lang="de")
         baustellenViewModel = new BaustellenViewModel();
         ko.applyBindings(baustellenViewModel);
       });
-      
+
+      function formatRowContent(data, index, row){
+        if(!index || row == 'Anzahl') return data;
+        return (data instanceof Array)
+          ? data.map(function(x){return duration(x)}).join('<br>')
+          : duration(data);
+      }
 
   body
     #layoutMenu.dropdown
@@ -141,6 +147,9 @@ html(lang="de")
         a.btn(onclick='geocode()')
           i.icon-flag
           |  reverse geocode
+      h3 Gates
+      div(data-bind="foreach: stats.gates")
+        a.btn.active(data-toggle="button", data-bind="text: $data")
       h3 Filter
       div
         ul
@@ -177,31 +186,15 @@ html(lang="de")
         | 0:00
       #anim_slider
     #infoTable.span7: table.table.table-condensed
-      //- thead
-      //-   tr
-      //-     th Truck
-      //-     th(colspan=2) Dumper 1
-      //-     th(colspan=2) Dumper 2
-      //-   tr
-      //-     th Segment
-      //-     th Gate 1 to 1
-      //-     th Gate 1 to 3
-      //-     th Gate 1 to 1
-      //-     th Gate 1 to 3
-      //- tbody
-      //-   each s in [1,2,3,4]
-      //-     tr
-      //-       td Segment time #{s}
-      //-       td 2:30
-      //-       td 2:30
-      //-       td 2:30
-      //-       td 2:30
       thead
-        tr(data-bind="foreach: stats2")
+        tr
+          th Gates
+          // ko foreach: stats.info 
           th(data-bind="text: from()+' zu '+to()")
-      tbody
-        tr(data-bind="foreach: stats2")
-          td(data-bind="text: Math.round(mean())")
+          // /ko 
+      tbody(data-bind="foreach: {data: stats.table, as: 'row'}")
+        tr(data-bind="foreach: row")
+          td(data-bind="html: formatRowContent($data, $index(), row[0])")
     #files
       each f in files
         a(href="javascript: loadMap('"+f+"')")= f

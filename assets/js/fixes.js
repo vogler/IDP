@@ -20,3 +20,11 @@ ko.bindingHandlers.enterKey = {
     ko.bindingHandlers.event.init( element, newValueAccessor, allBindingsAccessor, data );
   }
 };
+
+// Sugar
+function duration(seconds){
+  // var seconds = Math.round(seconds);
+  var hours = Math.floor(seconds/60/60);
+  var seconds = seconds || 0
+  return (hours >= 1 ? hours+':' : '') + Date.create(seconds.seconds()).format('{mm}:{ss}');
+}

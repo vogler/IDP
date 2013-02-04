@@ -4,3 +4,5 @@ img
 maps
 *.jar
 *.exe
+*.sublime-project
+*.sublime-workspace

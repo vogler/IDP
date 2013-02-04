@@ -138,22 +138,32 @@ app.get "/map/:file", (req, res) ->
               map.intersections.push time: time, gate: gate.i # chronological
             d
         b
-      map.stats = {}
+      # aggregate stats
+      stats = {}
       map.intersections.reduce (a, b, i, arr) ->
-        map.stats[a.gate] ?= {}
-        map.stats[a.gate][b.gate] ?= times: []
-        map.stats[a.gate][b.gate].times.push b.time-a.time
+        stats[a.gate] ?= {}
+        stats[a.gate][b.gate] ?= times: []
+        stats[a.gate][b.gate].times.push b.time-a.time
         b
-      map.stats2 ?= []
-      for g1,v1 of map.stats
-        console.log g1
+      map.stats = info: [], table: []
+      for g1,v1 of stats
         for g2,v2 of v1
+          v2.times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
           sum = v2.times.reduce (a,b) -> a+b
-          console.log "\t", g2, sum
-          v2.mean = sum/v2.times.length
-          map.stats2.push from: g1, to: g2, mean: v2.mean
+          n = v2.times.length
+          mean = sum/n
+          ssd = v2.times.reduce ((a,b) -> a + Math.pow(b-mean, 2)), 0
+          stdev = Math.sqrt(1/(n-1)*ssd)
+          map.stats.info.push from: g1, to: g2, times: v2.times, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev)
       # map.gates = gates
-      map.meanDuration = time/map.track.length
+      # need to gather data in rows for Knockout-template :(
+      map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.times.length),
+                   ['Summe'].concat(map.stats.info.map (x) -> x.sum),
+                   ['Mittel'].concat(map.stats.info.map (x) -> x.mean),
+                   ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),
+                   ['Zeiten'].concat(map.stats.info.map (x) -> x.times),]
+      map.stats.gates = gates.map (x) -> x.i
+      map.meanDuration = Math.round(time/map.track.length)
       res.json map
 
 app.post "/upload", (req, res) ->

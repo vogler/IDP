@@ -189,7 +189,7 @@ function loadMap(file){
       $('#time_duration').text((json.endTime-json.startTime).seconds().duration('de'));
 
       // stats
-      ko.mapping.fromJS(json.stats2, stats2);
+      ko.mapping.fromJS(json.stats, stats);
   });
 }
 
@@ -201,16 +201,16 @@ var anim = {
   fullPath: undefined,
   i: 0,
   curPosMarker: new google.maps.Circle({
-      strokeColor: '#FF0000',
+      strokeColor: '#00FF00',
       strokeWeight: 3,
-      fillColor: '#FF0000',
+      fillColor: '#00FF00',
       fillOpacity: 0.5,
-      radius: 15
+      radius: 15,
+      zIndex: 3
     })
 };
 function anim_updateTime(){
-  // TODO more than 24h
-  $("#anim_time").text(Date.create(track[anim.i].time.seconds()).addHours(-1).format('{24hr}:{mm}:{ss}'));
+  $("#anim_time").text(duration(track[anim.i].time));
 }
 function anim_play(){
   if(!anim.playing) {
@@ -245,7 +245,7 @@ function anim_step(){
   if(!anim.i) return;
   path.setPath(anim.fullPath.first(anim.i));
   if(anim.follow) map.setCenter(anim.fullPath[anim.i]);
-  anim.curPosMarker.setCenter(anim.fullPath[anim.i]);
+  anim.curPosMarker.setCenter(anim.fullPath[anim.i-1]);
   $("#anim_slider").slider({ value: anim.i });
   anim_updateTime();
   anim.i++;
