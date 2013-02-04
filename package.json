@@ -13,6 +13,6 @@
     "mongoskin": ">= 0.4.4",
     "xml2js": ">= 0.2.2",
     "connect-assets": ">= 2.3.3",
-    "coffee-script": ">= 1.4.0",
+    "coffee-script": ">= 1.4.0"
   }
 }
