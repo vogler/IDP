@@ -1,4 +1,4 @@
-//- globals: map, path, anim, file, track
+//- globals: map, path, anim, file, track, heatmap, markers
 $(document).ready(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -27,6 +27,16 @@ $(document).ready(function() {
       strokeWeight: strokeWeight,
       map: map
     });
+
+    heatmap = new google.maps.visualization.HeatmapLayer({
+      data: path.getPath()
+    });
+
+    markers = (0).upto(9).map(function(i){
+      return { name: String.fromCharCode(65 + i),
+               icon: new google.maps.MarkerImage('img/red_markers_A_J2.png', new google.maps.Size(20,34), new google.maps.Point(0,i*34))};
+    });
+
     loadMap(db_files().first());
   }
 
@@ -155,12 +165,16 @@ function loadGates(){
   $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
     gates.each(function(gate){
       var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
-      console.log(gate.i);
+      var i = parseInt(gate.i);
+      // console.log(gate.i);
       var marker = new google.maps.Marker({
           position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
           map: map,
-          title: 'Gate '+gate.i,
-          zIndex: parseInt(gate.i)+9
+          title: 'Gate '+markers[i].name,
+          zIndex: i+9,
+          // flat: true, 
+          // clickable: false,
+          icon: markers[i].icon
       });
     });
   });
@@ -190,6 +204,10 @@ function loadMap(file){
 
       // stats
       ko.mapping.fromJS(json.stats, stats);
+
+      // heatmap
+      if(heatmap.getMap())
+        heatmap.setData(path.getPath()); // OPT: not necessary if heatmap is deactivated
   });
 }
 
@@ -292,4 +310,14 @@ function geocode() {
 function tooltips(attr){
   var tooltips = $('#tooltips').attr('checked', attr == 'show' ? true : undefined).attr('checked');
   $('#controls a[rel = "tooltip"]').tooltip(attr ? attr : tooltips ? null : 'destroy');
+}
+
+function toggleLine() {
+  path.setMap(path.getMap() ? null : map);
+}
+
+function toggleHeatmap() {
+  heatmap.setMap(heatmap.getMap() ? null : map);
+  if(heatmap.getMap())
+    heatmap.setData(path.getPath()); // OPT: not set in loadMap() if heatmap is deactivated
 }

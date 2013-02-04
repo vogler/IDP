@@ -5,7 +5,7 @@ html(lang="de")
     link(href="css/bootstrap.min.css", rel="stylesheet", media="screen")
     link(href="css/smoothness/jquery-ui-1.9.2.custom.min.css", rel="stylesheet")
     link(href="css/jquery.miniColors.css", rel="stylesheet")
-    script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false")
+    script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization")
     script(src="js/jquery-1.8.3.min.js")
     script(src="js/jquery-ui-1.9.2.custom.min.js")
     script(src="js/jquery.miniColors.min.js")
@@ -149,7 +149,7 @@ html(lang="de")
           |  reverse geocode
       h3 Gates
       div(data-bind="foreach: stats.gates")
-        a.btn.active(data-toggle="button", data-bind="text: $data")
+        a.btn.active(data-toggle="button", data-bind="text: markers[$data].name")
       h3 Filter
       div
         ul
@@ -175,6 +175,10 @@ html(lang="de")
         input(type='text')#stroke_spinner
         //- html5 number picker
         //- input(type="number", min="0", max="10", step=".1", value="1")
+        .btn-group
+          a.btn.active(onclick='toggleLine()', data-toggle="button") Linie
+          a.btn.active(onclick='toggleMarkers()', data-toggle="button") Marker
+          a.btn(onclick='toggleHeatmap()', data-toggle="button") Heatmap
         div
           label.checkbox.pull-left
             input#tooltips(type="checkbox", checked, onclick='tooltips()')
@@ -190,7 +194,7 @@ html(lang="de")
         tr
           th Gates
           // ko foreach: stats.info 
-          th(data-bind="text: from()+' zu '+to()")
+          th(style="white-space: nowrap", data-bind="text: markers[from()].name+' zu '+markers[to()].name")
           // /ko 
       tbody(data-bind="foreach: {data: stats.table, as: 'row'}")
         tr(data-bind="foreach: row")
