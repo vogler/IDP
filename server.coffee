@@ -25,7 +25,16 @@ app.configure "development", ->
 
 
 # configure paths
-pathMaps    = __dirname + "/maps/"
+paths =
+  maps:    "maps"
+  uploads: "maps/uploads"
+  gpx:     "maps/gpx"
+  json:    "maps/json"
+# prepend __dirname, append /, check if all exist
+for k,v of paths
+  paths[k] = path.join(__dirname, v+"/")
+  if not fs.existsSync(paths[k])
+    fs.mkdirSync(paths[k]) # no mkdir -p -> paths must be tree-ordered!
 
 # DB
 # Environment: appfog or local
@@ -57,8 +66,8 @@ app.get "/db", (req, res) ->
     res.json items
 
 app.get "/db/:collection/:id?", (req, res) ->
-  query = if req.query.query then JSON.parse(req.query.query) else {}
-  query = _id: db.ObjectID.createFromHexString(req.params.id) if req.params.id
+  query = if req.params.id then _id: db.ObjectID.createFromHexString(req.params.id) else
+          if req.query.query then JSON.parse(req.query.query) else {}
   db.collection(req.params.collection).findItems query, (err, items) ->
     if req.params.id
       if items.length > 0
@@ -90,7 +99,7 @@ app.put "/db/:collection", (req, res) ->
 
 # routes
 app.get "/", (req, res) ->
-  fs.readdir pathMaps + 'json/', (err, files) ->
+  fs.readdir paths.json, (err, files) ->
     files ?= []
     baustellen.findItems {}, sort: "name", (err, items) ->
       res.render "index.jade",
@@ -99,7 +108,7 @@ app.get "/", (req, res) ->
         baustellen: items
 
 app.get "/maps", (req, res) ->
-  fs.readdir pathMaps + 'json/', (err, files) ->
+  fs.readdir paths.json, (err, files) ->
     res.json files
 
 app.get "/map/:file", (req, res) ->
@@ -107,7 +116,7 @@ app.get "/map/:file", (req, res) ->
   console.log excluded, req.query
   file = req.params.file
   console.log file
-  path = pathMaps + 'json/' + file
+  path = paths.json + file
   # readStream = fs.createReadStream path
   # util.pump readStream, res # fast, streaming, no whitespaces
   fs.readFile path, (err, data) ->
@@ -146,19 +155,20 @@ app.get "/map/:file", (req, res) ->
         b
       # aggregate stats
       stats = {}
-      map.intersections.reduce (a, b, i, arr) ->
+      map.intersections.reduce (a, b) ->
         stats[a.gate] ?= {}
         stats[a.gate][b.gate] ?= times: []
         stats[a.gate][b.gate].times.push b.time-a.time
         b
+      , null # reduce needs initialValue in case the array is empty
       map.stats = info: [], table: []
       for g1,v1 of stats
         for g2,v2 of v1
           v2.times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
-          sum = v2.times.reduce (a,b) -> a+b
+          sum = v2.times.reduce ((a,b) -> a+b), 0
           n = v2.times.length
           mean = sum/n
-          ssd = v2.times.reduce ((a,b) -> a + Math.pow(b-mean, 2)), 0
+          ssd = if v2.times.length<2 then 0 else v2.times.reduce (a,b) -> a + Math.pow(b-mean, 2)
           stdev = Math.sqrt(1/(n-1)*ssd)
           map.stats.info.push from: g1, to: g2, times: v2.times, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev)
       # map.gates = gates
@@ -169,41 +179,53 @@ app.get "/map/:file", (req, res) ->
                    ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),
                    ['Zeiten'].concat(map.stats.info.map (x) -> x.times),]
       map.stats.allGates = gates.map (x) -> x.i
-      map.stats.intersectedGates = map.stats.info.reduce ((a,b) ->
+      map.stats.intersectedGates = map.stats.info.reduce (a,b) ->
         f = (x,y) -> if x in y then y else y.concat(x) # unique append
-        f b.from, (f b.to, a)), []
+        f b.from, (f b.to, a)
+      , []
       map.meanDuration = Math.round(time/map.track.length)
       res.json map
+
+moveFile = (src, dst, callback) ->
+  fs.rename src, dst, (err) -> # renameSync doesn't work on Linux if the file is moved between volumes (e.g. from /tmp...)
+    if err
+      console.log "mv ", src, dst, "failed, copy instead"
+      rs = fs.createReadStream src
+      ws = fs.createWriteStream dst
+      rs.pipe ws
+      rs.on "end", () ->
+        fs.unlink src, callback # delete src
+    else callback()
 
 app.post "/upload", (req, res) ->
   file = req.files.map
   eyes.inspect file
-  pathUpload  = pathMaps + 'uploads/' + file.name
-  pathGpx     = pathMaps + 'gpx/'     + file.name + ".gpx"
-  pathJson    = pathMaps + 'json/'    + file.name + ".gpx"
-  fs.renameSync file.path, pathUpload
-  cmd = 'java -jar RouteConverterCmdLine.jar "' + pathUpload + '" Gpx11Format "' + pathGpx + '"'
-  console.log cmd
-  exec cmd, (error, stdout, stderr) ->
-    sys.print "stdout: " + stdout
-    fs.readFile pathGpx, (err, data) ->
-      xmlParser.parseString data, (err, result) ->
-        # console.dir(result);
-        # eyes.inspect(result);
-        startTime = 0
-        track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
-          startTime = Date.parse(x.time[0])/1000 if !startTime
-          lat: x.$.lat
-          lng: x.$.lon
-          ele: x.ele[0]
-          time: Date.parse(x.time[0])/1000-startTime
-        )
-        map =
-          startTime: startTime
-          endTime: startTime + track[track.length-1].time
-          track: track
-        fs.writeFile pathJson, JSON.stringify(map), (err) ->
-          res.redirect "back"
+  pathUpload  = paths.uploads + file.name
+  pathGpx     = paths.gpx     + file.name + ".gpx"
+  pathJson    = paths.json    + file.name + ".gpx"
+  moveFile file.path, pathUpload, (err) ->
+    cmd = 'java -jar RouteConverterCmdLine.jar "' + pathUpload + '" Gpx11Format "' + pathGpx + '"'
+    console.log cmd
+    exec cmd, (error, stdout, stderr) ->
+      sys.print "stdout: " + stdout
+      fs.readFile pathGpx, (err, data) ->
+        xmlParser.parseString data, (err, result) ->
+          # console.dir(result);
+          # eyes.inspect(result);
+          startTime = 0
+          track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
+            startTime = Date.parse(x.time[0])/1000 if !startTime
+            lat: x.$.lat
+            lng: x.$.lon
+            ele: x.ele[0]
+            time: Date.parse(x.time[0])/1000-startTime
+          )
+          map =
+            startTime: startTime
+            endTime: startTime + track[track.length-1].time
+            track: track
+          fs.writeFile pathJson, JSON.stringify(map), (err) ->
+            res.redirect "back"
 
 
 app.listen app.get("port")
