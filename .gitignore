@@ -1,7 +1,6 @@
-node_modules
-images
-img
-maps
+node_modules/
+maps/
+data/
 *.jar
 *.exe
 *.sublime-project
