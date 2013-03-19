@@ -91,6 +91,7 @@ app.put "/db/:collection", (req, res) ->
 # routes
 app.get "/", (req, res) ->
   fs.readdir pathMaps + 'json/', (err, files) ->
+    files ?= []
     baustellen.findItems {}, sort: "name", (err, items) ->
       res.render "index.jade",
         pageTitle: "GPS-Daten"

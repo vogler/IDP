@@ -194,7 +194,7 @@ html(lang="de")
       span#anim_time
         | 0:00
       #anim_slider
-    #infoTable.span7: table.table.table-condensed
+    #infoTable.span7: table.table.table-condensed(data-bind="visible: stats.table().length")
       thead
         tr
           th Gates
@@ -205,6 +205,8 @@ html(lang="de")
         tr(data-bind="foreach: row")
           td(data-bind="html: formatRowContent($data, $index(), row[0])")
     #files
+      if files.length<1
+        | Es sind noch keine Karten vorhanden
       each f in files
         a(href="javascript: loadMap('"+f+"')")= f
         br

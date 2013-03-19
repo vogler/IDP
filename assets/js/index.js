@@ -37,7 +37,9 @@ $(document).ready(function() {
                icon: new google.maps.MarkerImage('img/red_markers_A_J2.png', new google.maps.Size(20,34), new google.maps.Point(0,i*34))};
     });
 
-    loadMap(db_files().first());
+    if(db_files().length){
+      loadMap(db_files().first());
+    }
   }
 
   // controls
@@ -182,7 +184,7 @@ function loadGates(){
 
 function loadMap(file){ // reloads if file is undefined
   if(!file) file = window.file
-  window.file = file;
+  else window.file = file;
   anim_stop();
   // var excluded = $('#gates :not(.active)').map(function(){return $(this).attr("i")}); // can't convert to JSON because of jQuery's circular structures
   var excluded = $.map($('#gates :not(.active)'), function(x){return $(x).attr("i")});
