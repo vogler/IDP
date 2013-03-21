@@ -1,7 +1,7 @@
 node_modules/
 maps/
 data/
-*.jar
 *.exe
 *.sublime-project
 *.sublime-workspace
+notes

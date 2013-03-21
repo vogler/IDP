@@ -21,15 +21,22 @@ __Client:__
 [ColorPicker](http://www.abeautifulsite.net/blog/2011/02/jquery-minicolors-a-color-selector-for-input-controls/)
 
 #Installation
+    git clone https://github.com/vogler/IDP.git
     cd IDP
     npm install
 
+For now all the needed client libraries and the .jar for converting maps are contained in this repo.
+
+TODO: use [yeoman](http://yeoman.io/) or [bower](http://twitter.github.com/bower/)
+
+
 #Start
-    mongod
+    mongod --dbpath data/db
     coffee server
 
 Alternatively (reloads on changes):
 
+    sudo npm install -g nodemon
     nodemon server.coffee
 
 A JS version can be compiled using:
