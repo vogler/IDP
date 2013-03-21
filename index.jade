@@ -125,7 +125,7 @@ html(lang="de")
           a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
         ul.unstyled
           li 
-            a.btn.btn-mini#btn_gate: i.icon-plus
+            a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
             |  Gates
           li
             a.btn.btn-mini#btn_area(rel="tooltip", title="bla"): i.icon-plus
@@ -154,7 +154,9 @@ html(lang="de")
         //- .active is added after onclick -> one behind
         //- don't disable excluded gates (keep initial intersectedGates)
         //- click in data-bind doesn't work (maybe because no binding was applied)
-        a.btn.active(data-toggle="button", data-bind="text: markers[$data].name, attr: {i: $data}, css: {disabled: stats.intersectedGates().indexOf($data)==-1}", onclick="if(!$(this).hasClass('disabled')) loadMap()")
+        a.btn.active(data-toggle="button"
+          data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGates().indexOf($data)==-1}"
+          onclick="if(!$(this).hasClass('disabled')) loadMap()")
       h3 Filter
       div
         ul
@@ -199,7 +201,7 @@ html(lang="de")
         tr
           th Gates
           // ko foreach: stats.info 
-          th(style="white-space: nowrap", data-bind="text: markers[from()].name+' zu '+markers[to()].name")
+          th(style="white-space: nowrap", data-bind="text: markers[from()].title+' zu '+markers[to()].title")
           // /ko 
       tbody(data-bind="foreach: {data: stats.table, as: 'row'}")
         tr(data-bind="foreach: row")

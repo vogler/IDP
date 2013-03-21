@@ -32,9 +32,15 @@ $(document).ready(function() {
       data: path.getPath()
     });
 
+    // create markers with letters from A to J
     markers = (0).upto(9).map(function(i){
-      return { name: String.fromCharCode(65 + i),
-               icon: new google.maps.MarkerImage('img/red_markers_A_J2.png', new google.maps.Size(20,34), new google.maps.Point(0,i*34))};
+      return new google.maps.Marker({
+        title: String.fromCharCode(65 + i),
+        zIndex: i+9,
+        icon: new google.maps.MarkerImage('img/red_markers_A_J2.png',
+          new google.maps.Size(20,34),
+          new google.maps.Point(0,i*34))
+      });
     });
 
     if(db_files().length){
@@ -165,18 +171,17 @@ function drawLine(path){
 function loadGates(){
   console.log(baustellenViewModel.baustelle()._id());
   $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
+    // hide all markers first
+    markers.each(function(marker){marker.setMap(null)});
     gates.each(function(gate){
       var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
       var i = parseInt(gate.i);
       // console.log(gate.i);
-      var marker = new google.maps.Marker({
+      markers[i].setOptions({
           position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
           map: map,
-          title: 'Gate '+markers[i].name,
-          zIndex: i+9,
           // flat: true, 
-          // clickable: false,
-          icon: markers[i].icon
+          // clickable: false
       });
     });
   });
@@ -319,6 +324,12 @@ function tooltips(attr){
 
 function toggleLine() {
   path.setMap(path.getMap() ? null : map);
+}
+
+function toggleMarkers() {
+  markers.each(function(marker){
+    marker.setMap(marker.getMap() ? null : map);
+  });
 }
 
 function toggleHeatmap() {

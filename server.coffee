@@ -155,12 +155,12 @@ app.get "/map/:file", (req, res) ->
         b
       # aggregate stats
       stats = {}
-      map.intersections.reduce (a, b) ->
-        stats[a.gate] ?= {}
-        stats[a.gate][b.gate] ?= times: []
-        stats[a.gate][b.gate].times.push b.time-a.time
-        b
-      , null # reduce needs initialValue in case the array is empty
+      if map.intersections.length>1
+        map.intersections.reduce (a, b) ->
+          stats[a.gate] ?= {}
+          stats[a.gate][b.gate] ?= times: []
+          stats[a.gate][b.gate].times.push b.time-a.time
+          b
       map.stats = info: [], table: []
       for g1,v1 of stats
         for g2,v2 of v1
