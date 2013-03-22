@@ -136,12 +136,9 @@ html(lang="de")
               |  Area
       h3 Gates
       #gates(data-bind="foreach: stats.allGates")
-        //- TODO fix bugs:
-        //- .active is added after onclick -> one behind
-        //- click in data-bind doesn't work (maybe because no binding was applied)
-        a.btn.active(data-toggle="button"
+        a.btn.active(
           data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
-          onclick="if(!$(this).hasClass('disabled')) loadMap()")
+          onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(); }")
       h3 Karte
       div
         | Datum: 
