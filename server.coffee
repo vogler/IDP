@@ -190,7 +190,7 @@ app.get "/map/:format?/:file", (req, res) ->
         header = [['Gates'].concat(map.stats.info.map (col) -> col.from+' zu '+col.to)]
         for row in header.concat(map.stats.table)
           row = row.map (x) -> if x instanceof Array then JSON.stringify x.toString() else x
-          res.write row.join(", \t")+"\r\n"
+          res.write row.join("; \t")+"\r\n"
         res.end()
       else
         res.json map
