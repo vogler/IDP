@@ -152,9 +152,12 @@ html(lang="de")
         | Dauer: 
         small#time_duration
         br
-        a.btn(onclick='geocode()')
+        a.btn.btn-small(onclick='geocode()')
           i.icon-flag
           |  reverse geocode
+        a.btn.btn-small(onclick="downloadCSV()", rel="tooltip", title="Auswertung als CSV herunterladen")
+          i.icon-file
+          | CSV
       h3 Animation
       div
         a.btn#btn_play: i.icon-play
@@ -203,5 +206,7 @@ html(lang="de")
       if files.length<1
         | Es sind noch keine Karten vorhanden
       each f in files
+        a.btn.btn-mini(href="/map/"+f) JSON
+        |  
         a(href="javascript: loadMap('"+f+"')")= f
         br

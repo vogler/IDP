@@ -111,11 +111,10 @@ app.get "/maps", (req, res) ->
   fs.readdir paths.json, (err, files) ->
     res.json files
 
-app.get "/map/:file", (req, res) ->
+app.get "/map/:format?/:file", (req, res) ->
   excluded = if req.query.excluded then JSON.parse(req.query.excluded) else []
-  console.log excluded, req.query
   file = req.params.file
-  console.log file
+  console.log file, req.params.format
   path = paths.json + file
   # readStream = fs.createReadStream path
   # util.pump readStream, res # fast, streaming, no whitespaces
@@ -184,7 +183,17 @@ app.get "/map/:file", (req, res) ->
         f b.from, (f b.to, a)
       , []
       map.meanDuration = Math.round(time/map.track.length)
-      res.json map
+      if req.params.format=='csv'
+        # res.header('content-type','text/csv'); 
+        # res.header('content-disposition', 'attachment; filename='+file+'.csv'); 
+        res.attachment(file+'.csv') # sets content-type and -disposition
+        header = [['Gates'].concat(map.stats.info.map (col) -> col.from+' zu '+col.to)]
+        for row in header.concat(map.stats.table)
+          row = row.map (x) -> if x instanceof Array then JSON.stringify x.toString() else x
+          res.write row.join(", \t")+"\r\n"
+        res.end()
+      else
+        res.json map
 
 moveFile = (src, dst, callback) ->
   fs.rename src, dst, (err) -> # renameSync doesn't work on Linux if the file is moved between volumes (e.g. from /tmp...)

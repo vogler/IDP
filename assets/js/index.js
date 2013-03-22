@@ -201,13 +201,16 @@ function loadGates(){
   });
 }
 
+function getExcludedGates(){
+  // return $('#gates :not(.active)').map(function(){return $(this).attr("i")}); // can't convert to JSON because of jQuery's circular structures
+  return $.map($('#gates :not(.active)'), function(x){return $(x).attr("i")});
+}
+
 function loadMap(file){ // reloads if file is undefined
   if(!file) file = window.file
   else window.file = file;
   anim_stop();
-  // var excluded = $('#gates :not(.active)').map(function(){return $(this).attr("i")}); // can't convert to JSON because of jQuery's circular structures
-  var excluded = $.map($('#gates :not(.active)'), function(x){return $(x).attr("i")});
-  //- '/map?file=' somehow breaks syntax highlighting for Jade
+  var excluded = getExcludedGates();
   $.getJSON('/map/' + file, {excluded: JSON.stringify(excluded)}, function(json){
       // track
       var bounds = new google.maps.LatLngBounds();
@@ -352,4 +355,13 @@ function toggleHeatmap() {
   heatmap.setMap(heatmap.getMap() ? null : map);
   if(heatmap.getMap())
     heatmap.setData(path.getPath()); // OPT: not set in loadMap() if heatmap is deactivated
+}
+
+function downloadCSV(){
+  var excl = getExcludedGates();
+  req = '/map/csv/'+file;
+  if(excl.length)
+    req += '?' + $.param({excluded: JSON.stringify(excl)});
+  console.log(req);
+  location.href = req;
 }
