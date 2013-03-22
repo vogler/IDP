@@ -61,6 +61,12 @@ $(document).ready(function() {
   $(':file').change(function(){
     $(this).parents('form').submit();
   });
+  // bootstrap-filestyle
+  $(":file").filestyle({ 
+    buttonText: 'Karte hochladen',
+    textField: false,
+    icon: true,
+  });
 
   // gates
   $('#btn_gate').click(function(){
@@ -77,7 +83,10 @@ $(document).ready(function() {
         // TODO hack
         $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
           // TODO change model to baustelle.gates
-          var item = {baustelle: baustellenViewModel.baustelle()._id(), i: gates.length, file: file, path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})};
+          var item = {baustelle: baustellenViewModel.baustelle()._id(),
+            i: gates.length, file: file,
+            path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
+          };
           console.log(item);
           $.post('/db/gates', item, function(item){
             console.log("added", item._id);
@@ -214,6 +223,8 @@ function loadMap(file){ // reloads if file is undefined
 
       // stats
       ko.mapping.fromJS(json.stats, stats);
+      if(!excluded.length)
+        stats.intersectedGatesOrg(stats.intersectedGates());
 
       // heatmap
       if(heatmap.getMap())

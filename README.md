@@ -18,7 +18,9 @@ __Client:__
 [Twitter Bootstrap](http://twitter.github.com/bootstrap/),
 [Knockout](http://knockoutjs.com),
 ~~[Sugar](http://sugarjs.com/)~~,
-[ColorPicker](http://www.abeautifulsite.net/blog/2011/02/jquery-minicolors-a-color-selector-for-input-controls/)
+[ColorPicker](http://www.abeautifulsite.net/blog/2011/02/jquery-minicolors-a-color-selector-for-input-controls/),
+[bootstrap-filestyle](http://markusslima.github.com/bootstrap-filestyle/)
+
 
 #Installation
     git clone https://github.com/vogler/IDP.git
