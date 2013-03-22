@@ -1,4 +1,4 @@
-//- globals: map, path, anim, file, track, heatmap, markers
+//- globals: map, path, anim, file, track, heatmap, markers, lines
 $(document).ready(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -177,13 +177,18 @@ function drawLine(path){
   });
 }
 
+lines = [];
 function loadGates(){
   console.log(baustellenViewModel.baustelle()._id());
   $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
     // hide all markers first
     markers.each(function(marker){marker.setMap(null)});
+    // hide all lines
+    lines.each(function(line){line.setMap(null)});
+    // draw new gates
     gates.each(function(gate){
       var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
+      lines.push(line);
       var i = parseInt(gate.i);
       // console.log(gate.i);
       markers[i].setOptions({

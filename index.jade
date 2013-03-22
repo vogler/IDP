@@ -122,7 +122,7 @@ html(lang="de")
       h3 Baustelle
       div
         .form-inline
-          select.input-medium(data-bind="options: baustellen, optionsCaption: 'wählen...', optionsText: 'name', value: baustelle, event:{ change: loadGates}")
+          select.input-medium(data-bind="options: baustellen, optionsText: 'name', value: baustelle, event: { change: loadGates}")
           a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
         div(data-bind="visible: baustelle")
           form(action="/upload", method="post", enctype="multipart/form-data")
