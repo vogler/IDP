@@ -3,7 +3,9 @@
   "version": "0.0.2",
   "private": true,
   "scripts": {
-    "start": "node server"
+    "prestart": "mongod --dbpath data/db --shutdown; mongod --dbpath data/db --fork --logpath data/db/log",
+    "start":    "node server",
+    "poststop": "mongod --dbpath data/db --shutdown"
   },
   "dependencies": {
     "express": ">= 3.0.4",

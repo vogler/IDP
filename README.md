@@ -22,7 +22,9 @@ __Client:__
 [bootstrap-filestyle](http://markusslima.github.com/bootstrap-filestyle/)
 
 
-#Installation
+# Installation
+Make sure you have [node](http://nodejs.org/)'s npm and [mongodb](http://www.mongodb.org/) installed, then do
+
     git clone https://github.com/vogler/IDP.git
     cd IDP
     npm install
@@ -32,9 +34,13 @@ For now all the needed client libraries and the .jar for converting maps are con
 TODO: use [yeoman](http://yeoman.io/) or [bower](http://twitter.github.com/bower/)
 
 
-#Start
+# Usage
+Start node and mongodb using `npm start` (shuts down running instances of mongod first), stop using `npm stop`.
+
+If you prefer to start the processes manually, do
+
     mongod --dbpath data/db
-    coffee server
+    coffee server.coffee
 
 Alternatively (reloads on changes):
 
@@ -43,4 +49,4 @@ Alternatively (reloads on changes):
 
 A JS version can be compiled using:
 
-    coffee -c server
+    coffee -c server.coffee

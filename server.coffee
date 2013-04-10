@@ -249,4 +249,4 @@ app.post "/upload", (req, res) ->
 
 
 app.listen app.get("port"), () ->
-  console.log "server listening at port", app.get("port")
+  console.log "server listening on port", app.get("port")
