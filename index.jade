@@ -210,3 +210,10 @@ html(lang="de")
         |  
         a(href="javascript: loadMap('"+f+"')")= f
         br
+
+    if node_env=="development"
+      // livereload snippet
+      script
+        document.write('<script src="http://'
+         + (location.host || 'localhost').split(':')[0]
+         + ':35729/livereload.js?snipver=1"><\/script>')

@@ -9,6 +9,7 @@ exec = require("child_process").exec
 util = require("util")
 app = express()
 
+
 # configure server
 app.configure ->
   # app.use(express.logger());
@@ -20,7 +21,7 @@ app.configure ->
   app.use require('connect-assets')()
   app.use express.static(__dirname + "/public")
 
-app.configure "development", ->
+app.configure "development", -> # default, if NODE_ENV is not set
   app.use express.errorHandler()
 
 
@@ -36,31 +37,40 @@ for k,v of paths
   if not fs.existsSync(paths[k])
     fs.mkdirSync(paths[k]) # no mkdir -p -> paths must be tree-ordered!
 
-# DB
-# Environment: appfog or local
-if process.env.VCAP_SERVICES
-  env = JSON.parse(process.env.VCAP_SERVICES)
-  mongo = env["mongodb-1.8"][0]["credentials"]
-else
-  mongo = db: "idp"
+
+# configure database (mongodb)
+# environment: appfog, heroku (using mongolab or mongohq) or local
 generate_mongo_url = (obj) ->
   obj.hostname = (obj.hostname or "localhost")
   obj.port = (obj.port or 27017)
   obj.db = (obj.db or "test")
   (if obj.username and obj.password then obj.username + ":" + obj.password + "@" else "") + obj.hostname + ":" + obj.port + "/" + obj.db
-mongourl = generate_mongo_url(mongo)
+# appfog
+if process.env.VCAP_SERVICES
+  env = JSON.parse(process.env.VCAP_SERVICES)
+  mongo = env["mongodb-1.8"][0]["credentials"]
+  mongo_appfog = generate_mongo_url(mongo)
+# heroku:
+#   to avoid credit card verification for add-ons simply create an account and set the variable yourself:
+#     heroku config:set MONGOHQ_URL="mongodb://<user>:<password>@dharma.mongohq.com:10003/idp"
+#   connect using:
+#     mongo dharma.mongohq.com:10003/idp -u <user> -p<password>
+mongoUri = mongo_appfog || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/idp'
 
-# mongoskin
+# connect using mongoskin (future layer for node-mongodb-native)
 mongo = require("mongoskin")
-db = mongo.db(mongourl + "?auto_reconnect", safe: true)
+db = mongo.db(mongoUri + "?auto_reconnect", safe: true)
 db.open (err, db) ->
   if err
-    console.log "Couldn't connect to " + mongourl
+    console.log "couldn't connect to " + mongoUri
+    process.exit 1
   else
-    console.log "Connected to " + mongourl
+    console.log "connected to " + mongoUri
+
 # collections
 baustellen = db.collection("baustellen")
-# REST
+
+# REST access to database
 app.get "/db", (req, res) ->
   db.collectionNames (err, items) ->
     res.json items
@@ -106,6 +116,7 @@ app.get "/", (req, res) ->
         pageTitle: "GPS-Daten"
         files: files
         baustellen: items
+        node_env: process.env.NODE_ENV ? "development"
 
 app.get "/maps", (req, res) ->
   fs.readdir paths.json, (err, files) ->
@@ -237,4 +248,5 @@ app.post "/upload", (req, res) ->
             res.redirect "back"
 
 
-app.listen app.get("port")
+app.listen app.get("port"), () ->
+  console.log "server listening at port", app.get("port")
