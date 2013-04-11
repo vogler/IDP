@@ -11,18 +11,33 @@ app = express()
 
 
 # configure server
+stylus = require("stylus")
+# force recompile of x.styl every time x.css is requested
+compileStyl = (req, res, next) ->
+  # console.log "compileStyl", req.url
+  stylFile = "assets/css/"+path.basename(req.path, ".css")+".styl"
+  if not fs.existsSync stylFile
+    next()
+  else
+    # console.log "recompiling", stylFile
+    res.type "css"
+    res.send stylus(fs.readFileSync(stylFile).toString()).set("filename", stylFile).render()
 app.configure ->
   # app.use(express.logger());
   app.set "port", process.env.PORT or 3000
   app.set "views", __dirname + ""
   app.use express.bodyParser() # needed for req.files
   app.use express.methodOverride() # hidden input _method for put/del
-  # app.use require("stylus").middleware(__dirname + "/public")
+  # called before caching of connect-assets (only recompiles if css() is called (i.e. whole page is reloaded) -> breaks livereload for css)
+  app.use "/css/", compileStyl
   app.use require('connect-assets')()
+  # app.use require("stylus").middleware(__dirname + "/public")
   app.use express.static(__dirname + "/public")
 
 app.configure "development", -> # default, if NODE_ENV is not set
   app.use express.errorHandler()
+
+# console.log app.stack
 
 
 # configure paths
@@ -126,10 +141,10 @@ app.get "/map/:format?/:file", (req, res) ->
   excluded = if req.query.excluded then JSON.parse(req.query.excluded) else []
   file = req.params.file
   console.log file, req.params.format
-  path = paths.json + file
-  # readStream = fs.createReadStream path
+  pathJson = paths.json + file
+  # readStream = fs.createReadStream pathJson
   # util.pump readStream, res # fast, streaming, no whitespaces
-  fs.readFile path, (err, data) ->
+  fs.readFile pathJson, (err, data) ->
     if err
       res.send 404
       return
