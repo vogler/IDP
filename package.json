@@ -5,7 +5,8 @@
   "scripts": {
     "prestart": "mongod --dbpath data/db --shutdown; mongod --dbpath data/db --fork --logpath data/db/log",
     "start": "node server",
-    "poststop": "mongod --dbpath data/db --shutdown"
+    "poststop": "mongod --dbpath data/db --shutdown",
+    "postinstall": "./node_modules/bower/bin/bower install"
   },
   "dependencies": {
     "express": "~3.1.1",
@@ -15,6 +16,7 @@
     "mongoskin": ">= 0.4.4",
     "xml2js": ">= 0.2.2",
     "connect-assets": ">= 2.3.3",
-    "coffee-script": ">= 1.4.0"
+    "coffee-script": ">= 1.4.0",
+    "bower": "~0.8.6"
   }
 }
