@@ -1,5 +1,5 @@
 //- globals: map, path, anim, file, track, heatmap, markers, lines
-$(document).ready(function() {
+$(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
   }else{
@@ -58,14 +58,24 @@ $(document).ready(function() {
     .css('padding', '.7em');
 
   // submit forms on file select
-  $(':file').change(function(){
-    $(this).parents('form').submit();
-  });
-  // bootstrap-filestyle
-  $(":file").filestyle({ 
-    buttonText: 'Karte hochladen',
-    textField: false,
-    icon: true,
+  // $(':file').change(function(){
+  //   $(this).parents('form').submit();
+  // });
+  // jquery-file-upload
+  $(":file").fileupload({ 
+    done: function (e, data) {
+      console.log('upload:done');
+      $('.progress').hide();
+      // $.each(data.result.files, function (index, file) {
+      //   $('<p/>').text(file.name).appendTo(document.body);
+      // });
+    },
+    progressall: function (e, data) {
+        console.log('upload:progressall');
+        $('.progress').show();
+        var progress = parseInt(data.loaded / data.total * 100, 10);
+        $('.progress .bar').css('width', progress + '%');
+    }
   });
 
   // gates
@@ -147,7 +157,7 @@ $(document).ready(function() {
   $( "#speed" ).text(anim.speed);
 
   // colorpicker
-  $('#colorSelector').val(strokeColor).addClass('black').hide().miniColors({
+  $('#colorSelector').val(strokeColor).addClass('black').hide().minicolors({
     readonly: true, opacity: true, 
     change: function(hex, rgba){
       path.setOptions({strokeColor: hex, strokeOpacity: rgba.a});
