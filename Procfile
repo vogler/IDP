@@ -1,1 +1,1 @@
-web: ./node_modules/bower/bin/bower install; coffee server.coffee
+web: coffee server.coffee
