@@ -3,14 +3,14 @@ html(lang="de")
   head
     title= pageTitle
     link(href="css/bootstrap.min.css", rel="stylesheet", media="screen")
-    link(href="css/smoothness/jquery-ui-1.9.2.custom.min.css", rel="stylesheet")
+    link(href="css/slider.css", rel="stylesheet")
     link(href="css/jquery.miniColors.css", rel="stylesheet")
     script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization")
     script(src="js/jquery-1.8.3.min.js")
-    script(src="js/jquery-ui-1.9.2.custom.min.js")
     script(src="js/jquery.miniColors.min.js")
     script(src="js/bootstrap.min.js")
     script(src="js/bootstrap-filestyle-0.1.0.min.js")
+    script(src="js/bootstrap-slider.js")
     script(src="js/sugar-1.3.6.min.js")
     script(src="js/sugar-locale-de.js")
     script(src="js/knockout-2.2.0.js")
@@ -114,84 +114,95 @@ html(lang="de")
             input.span2(type='text', data-bind="value: newItem", placeholder='Name...', autofocus)
             a.btn(onclick="$(this).parents('form:first').submit()"): i.icon-plus
             input.btn(type='submit', value='hinzufügen')
-    #controls.ui-accordion.ui-widget.ui-helper-reset
-      h3 Upload
-      div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
-        form(action="/upload", method="post", enctype="multipart/form-data")
-          input(type='file', name='map')
-      h3 Baustelle
-      div
-        .form-inline
-          select.input-medium(data-bind="options: baustellen, optionsText: 'name', value: baustelle, event: { change: loadGates}")
-          a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
-        div(data-bind="visible: baustelle")
+
+    #controls
+      .accordion-group
+        h4 Upload
+        .accordion-inner
           form(action="/upload", method="post", enctype="multipart/form-data")
-            input(type='file', name='map2')
-          ul.unstyled.inline
-            li 
-              a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
-              |  Gates
-            li
-              a.btn.btn-mini#btn_area(rel="tooltip", title="bla"): i.icon-plus
-              |  Area
-      h3 Gates
-      #gates(data-bind="foreach: stats.allGates")
-        a.btn.active(
-          data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
-          onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(); }")
-      h3 Karte
-      div
-        | Datum: 
-        small#time_date
-        br
-        | Start: 
-        small#time_start
-        |  | Ende: 
-        small#time_end
-        br
-        | Dauer: 
-        small#time_duration
-        br
-        a.btn.btn-small(onclick='geocode()')
-          i.icon-flag
-          |  reverse geocode
-        a.btn.btn-small(onclick="downloadCSV()", rel="tooltip", title="Auswertung als CSV herunterladen")
-          i.icon-file
-          | CSV
-      h3 Animation
-      div
-        a.btn#btn_play: i.icon-play
-        a.btn(onclick='anim_stop()'): i.icon-stop
-        a.btn.active(onclick='anim.follow = !anim.follow', data-toggle="button")
-          i.icon-move
-          |  folgen
-        br
-        | Geschwindigkeit: 
-        span#speed
-        | x
-        #speed_slider
-      h3 Optionen
-      div
-        | Farbe: 
-        input(type='text')#colorSelector
-        |  Stärke: 
-        input(type='text')#stroke_spinner
-        //- html5 number picker
-        //- input(type="number", min="0", max="10", step=".1", value="1")
-        .btn-group
-          a.btn.active(onclick='toggleLine()', data-toggle="button") Linie
-          a.btn.active(onclick='toggleMarkers()', data-toggle="button") Marker
-          a.btn(onclick='toggleHeatmap()', data-toggle="button") Heatmap
-        div
-          label.checkbox.pull-left
-            input#tooltips(type="checkbox", checked, onclick='tooltips()')
-            | Tooltips &nbsp;
-          i.icon-eye-open(onclick="tooltips('show')")
+            input(type='file', name='map')
+      .accordion-group
+        h4 Baustelle
+        .accordion-inner
+          .form-inline
+            select.input-medium(data-bind="options: baustellen, optionsText: 'name', value: baustelle, event: { change: loadGates}")
+            a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
+          div(data-bind="visible: baustelle")
+            form(action="/upload", method="post", enctype="multipart/form-data")
+              input(type='file', name='map2')
+            ul.unstyled.inline
+              li 
+                a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
+                |  Gates
+              li
+                a.btn.btn-mini#btn_area(rel="tooltip", title="bla"): i.icon-plus
+                |  Area
+      .accordion-group
+        h4 Gates
+        .accordion-inner
+          #gates(data-bind="foreach: stats.allGates")
+            a.btn.active(
+              data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
+              onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(); }")
+      .accordion-group
+        h4 Karte
+        .accordion-inner
+          | Datum: 
+          small#time_date
+          br
+          | Start: 
+          small#time_start
+          |  | Ende: 
+          small#time_end
+          br
+          | Dauer: 
+          small#time_duration
+          br
+          a.btn.btn-small(onclick='geocode()')
+            i.icon-flag
+            |  reverse geocode
+          a.btn.btn-small(onclick="downloadCSV()", rel="tooltip", title="Auswertung als CSV herunterladen")
+            i.icon-file
+            | CSV
+      .accordion-group
+        h4 Animation
+        .accordion-inner
+          a.btn#btn_play: i.icon-play
+          a.btn(onclick='anim_stop()'): i.icon-stop
+          a.btn.active(onclick='anim.follow = !anim.follow', data-toggle="button")
+            i.icon-move
+            |  folgen
+          br
+          | Geschwindigkeit: 
+          span#speed
+          | x
+          #speed_slider
+      .accordion-group
+        h4 Optionen
+        .accordion-inner
+          | Farbe: 
+          input(type='text')#colorSelector
+          |  Stärke: 
+          //- input(type='text')#stroke_spinner
+          //- html5 number picker
+          input#stroke_spinner(type="number", min="0", max="10", step=".1", value="1")
+          .btn-group
+            a.btn.active(onclick='toggleLine()', data-toggle="button") Linie
+            a.btn.active(onclick='toggleMarkers()', data-toggle="button") Marker
+            a.btn(onclick='toggleHeatmap()', data-toggle="button") Heatmap
+          div
+            label.checkbox.pull-left
+              input#tooltips(type="checkbox", checked, onclick='tooltips()')
+              | Tooltips &nbsp;
+            i.icon-eye-open(onclick="tooltips('show')")
+
     #map_canvas
+
     #anim_timeline.hide
       span#anim_time
         | 0:00
       #anim_slider
+
     #infoTable.span7: table.table.table-condensed(data-bind="visible: stats.table().length")
       thead
         tr

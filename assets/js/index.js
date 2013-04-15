@@ -50,12 +50,7 @@ $(document).ready(function() {
 
   // controls
   // style of accordion but more than one active panel possible
-  //- $('#controls').addClass('ui-accordion ui-widget ui-helper-reset');
-  $('#controls > h3').addClass('ui-accordion-header ui-helper-reset ui-state-default ui-corner-all')
-    .css('padding', '.3em .7em').click(function(){$(this).next().slideToggle()})
-    .first().css('margin-top', 0);
-  $('#controls > div').addClass('ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom')
-    .css('padding', '.7em');
+  $('#controls h4').click(function(){$(this).next().slideToggle()});
 
   // submit forms on file select
   $(':file').change(function(){
@@ -134,14 +129,14 @@ $(document).ready(function() {
     range: "min",
     min: 1,
     max: 100,
-    value: anim.speed,
-    slide: function( event, ui ) {
-      $( "#speed" ).text( ui.value );
-      anim.speed = ui.value;
-      if(anim.playing){
-        anim_pause();
-        anim_play();
-      }
+    tooltip: 'hide',
+    value: anim.speed
+  }).on('slide', function( ev ) {
+    $( "#speed" ).text( ev.value );
+    anim.speed = ev.value;
+    if(anim.playing){
+      anim_pause();
+      anim_play();
     }
   });
   $( "#speed" ).text(anim.speed);
@@ -155,13 +150,13 @@ $(document).ready(function() {
   });
 
   // stroke spinner
-  $( "#stroke_spinner" ).val(strokeWeight).spinner({
-    min: 0, max: 20, step: 0.1,
-    numberFormat: 'n',
-    spin: function( event, ui ) {
-      path.setOptions({strokeWeight: ui.value});
-    }
-  });
+  // $( "#stroke_spinner" ).val(strokeWeight).spinner({
+  //   min: 0, max: 20, step: 0.1,
+  //   numberFormat: 'n',
+  //   spin: function( event, ui ) {
+  //     path.setOptions({strokeWeight: ui.value});
+  //   }
+  // });
 
   tooltips();
 });
@@ -269,14 +264,12 @@ function anim_play(){
     // animation timeline
     $("#anim_timeline").slideDown();
     $("#anim_slider").slider({
-      range: "min",
       min: 1,
       max: anim.fullPath.length,
-      value: anim.i,
-      slide: function( event, ui ) {
-        anim.i = ui.value;
-        anim_updateTime();
-      }
+      value: anim.i
+    }).on('slide', function( ev ) {
+      anim.i = ev.value;
+      anim_updateTime();
     });
     // current position marker
     anim.curPosMarker.setMap(map);

@@ -1,14 +1,5 @@
 html, body
   height 100%
-  margin 0
-  padding 0
-  font-family Arial, Sans
-
-[onclick]
-  cursor pointer
-
-// button
-//   cursor default!important
 
 #layoutMenu
   position absolute
@@ -21,29 +12,38 @@ html, body
   background-color lightsteelblue
   padding 3px
 #anim_slider
-  display inline-block
-  width 80% // TODO doesn't scale with fixed-width controls
-  margin-left 3px
-  margin-top 5px
+  // display inline-block
+  width 400px // TODO doesn't scale with fixed-width controls
+  // margin-left 3px
+  // margin-top 5px
 
 #controls
-  // padding .8em
-  // box-sizing border-box
   width 250px
   height 80%
   float right
-#speed_slider
-  margin-top 3px
+#controls h4
+  margin 0px
+  padding 3px
+  color #333
+  padding-left 5px
+  background-color #eee
+  cursor pointer
+  border-left 4px solid #98b3fa // #f38787 #65c465 #98b3fa
+.accordion-inner
+  padding 9px 9px !important
+
+.slider-track
+  background #eee
+.slider-selection
+  background #ccc
+.slider-handle
+  background #999
+  // width 15px
+
+// #speed_slider
+//   margin-top 3px
 #stroke_spinner
-  width 2em
+  width 3em
   border none
   padding 0
   margin-bottom 0
-
-
-@media print
-  html, body
-    height auto
-  
-  #map_canvas
-    height 650px
