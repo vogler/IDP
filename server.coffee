@@ -128,7 +128,6 @@ app.get "/", (req, res) ->
     files ?= []
     baustellen.findItems {}, sort: "name", (err, items) ->
       res.render "index.jade",
-        pageTitle: "GPS-Daten"
         files: files
         baustellen: items
         node_env: process.env.NODE_ENV ? "development"

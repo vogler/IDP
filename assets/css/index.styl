@@ -1,14 +1,5 @@
 html, body
   height 100%
-  margin 0
-  padding 0
-  font-family Arial, Sans
-
-[onclick]
-  cursor pointer
-
-// button
-//   cursor default!important
 
 #layoutMenu
   position absolute
@@ -17,33 +8,30 @@ html, body
 #map_canvas
   height 80%
 
-#anim_timeline
-  background-color lightsteelblue
-  padding 3px
-#anim_slider
-  display inline-block
-  width 80% // TODO doesn't scale with fixed-width controls
-  margin-left 3px
-  margin-top 5px
-
 #controls
-  // padding .8em
-  // box-sizing border-box
   width 250px
-  height 80%
-  float right
+#controls > h3
+  padding .3em .7em
+#controls > div
+  border-top 0  // replacement for ui-accordion-content
+  padding .7em
 #speed_slider
   margin-top 3px
+.minicolors-panel
+  background-color black
 #stroke_spinner
   width 2em
   border none
   padding 0
   margin-bottom 0
 
-
-@media print
-  html, body
-    height auto
-  
-  #map_canvas
-    height 650px
+#anim_timeline
+  background-color lightsteelblue
+  overflow hidden
+  padding 3px
+#anim_time
+  position absolute // label and slider in same line
+  margin-left .2em
+#anim_slider_container
+  margin-left 3em // offset for label
+  padding 3px 10px // some space for handle

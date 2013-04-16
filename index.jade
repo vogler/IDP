@@ -1,17 +1,17 @@
 doctype 5
 html(lang="de")
   head
-    title= pageTitle
+    title LogVis
     link(href="css/bootstrap.min.css", rel="stylesheet", media="screen")
-    link(href="css/smoothness/jquery-ui-1.9.2.custom.min.css", rel="stylesheet")
-    link(href="css/jquery.miniColors.css", rel="stylesheet")
+    link(href="css/smoothness/jquery-ui-1.10.2.custom.min.css", rel="stylesheet")
+    link(href="jquery.minicolors/jquery.minicolors.css", rel="stylesheet")
     script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization")
-    script(src="js/jquery-1.8.3.min.js")
-    script(src="js/jquery-ui-1.9.2.custom.min.js")
-    script(src="js/jquery.miniColors.min.js")
+    script(src="js/jquery-1.9.1.min.js")
+    script(src="js/jquery-ui-1.10.2.custom.min.js")
+    script(src="jquery.minicolors/jquery.minicolors.js")
     script(src="js/bootstrap.min.js")
     script(src="js/bootstrap-filestyle-0.1.0.min.js")
-    script(src="js/sugar-1.3.6.min.js")
+    script(src="js/sugar-1.3.9.min.js")
     script(src="js/sugar-locale-de.js")
     script(src="js/knockout-2.2.0.js")
     script(src="js/knockout.mapping-latest.js")
@@ -20,76 +20,7 @@ html(lang="de")
     != js('index')
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
-    script
-      stats = ko.mapping.fromJS({info: [], table: [], allGates: [], intersectedGates: [], intersectedGatesOrg: []});
-      $(function() {
-        function BaustellenViewModel() {
-          // Data
-          var self = this;
-          var url = '/db/baustellen';
-          //- self.baustellen = ko.observable([]);
-          //- $.getJSON(url, function(data) {
-          //-   self.baustellen(data);
-          //- });    
-          self.baustellen = db_baustellen;
-          self.baustelle = ko.observable();
-          self.newItem = ko.observable();
-
-          // extend model by an editing field
-          ko.utils.arrayForEach(self.baustellen(), function(item){
-            item.editing = ko.observable(false);
-          });
-
-          // Operations
-          self.addItem = function() {
-            var name = this.newItem();
-            $.post(url, {name: name}, function(item){
-              item.editing = ko.observable(false);
-              self.baustellen.push(item);
-              // update mapping (makes fields of new item observable too)
-              ko.mapping.fromJS(ko.mapping.toJS(self.baustellen), self.baustellen);
-              self.newItem("");
-              console.log("added", item._id);
-            });
-          };
-          self.removeItem = function(item) {
-            $.del(url, item, function(data){
-              self.baustellen.remove(item); // destroy marks for deletion
-              console.log("removed", data._id);
-            });
-          };
-          self.editItem = function(item, event) {
-            self.oldItem = ko.toJSON(item); // store old state
-            item.editing(true);
-          };
-          self.stopEditing = function(item, event) {
-            if(!item.editing()) return; // ignore blur after enter
-            item.editing(false);
-            // remove the item, if it is now empty
-            if(!item.name().trim()) {
-              self.removeItem(item);
-            } else if(ko.toJSON(item) != self.oldItem) { // only update on change
-              var tmp = item.editing;
-              delete item.editing; // don't save this helper field
-              $.put(url, item, function(data){
-                item.editing = tmp; // restore field
-                console.log("saved", data._id);
-              });
-            }
-          };
-        }
-        baustellenViewModel = new BaustellenViewModel();
-        ko.applyBindings(baustellenViewModel);
-      });
-      
-      function formatRowContent(data, index, row){
-        if(!index || row == 'Anzahl') return data;
-        if(data instanceof Array)
-          return data.map(function(x){return duration(x)}).join('<br>');
-        else
-          return duration(data);
-      }
-
+    != js('models')
   body
     #layoutMenu.dropdown
       a.btn.btn-mini.dropdown-toggle(data-toggle="dropdown")
@@ -98,6 +29,7 @@ html(lang="de")
         li: a(onclick="$('#controls').toggle()") Seitenleiste
         li: a(onclick="$('#infoTable').toggle()") Tabellen
         li: a(onclick="$('#files').toggle()") Dateiliste
+
     #baustellen.modal.fade.hide
       .modal-header
         button.close(data-dismiss="modal", aria-hidden="true") x
@@ -114,7 +46,8 @@ html(lang="de")
             input.span2(type='text', data-bind="value: newItem", placeholder='Name...', autofocus)
             a.btn(onclick="$(this).parents('form:first').submit()"): i.icon-plus
             input.btn(type='submit', value='hinzufügen')
-    #controls.ui-accordion.ui-widget.ui-helper-reset
+
+    #controls.pull-right.ui-accordion.ui-widget.ui-helper-reset
       h3 Upload
       div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
         form(action="/upload", method="post", enctype="multipart/form-data")
@@ -187,11 +120,15 @@ html(lang="de")
             input#tooltips(type="checkbox", checked, onclick='tooltips()')
             | Tooltips &nbsp;
           i.icon-eye-open(onclick="tooltips('show')")
+
     #map_canvas
+
     #anim_timeline.hide
-      span#anim_time
+      #anim_time
         | 0:00
-      #anim_slider
+      #anim_slider_container
+        #anim_slider
+
     #infoTable.span7: table.table.table-condensed(data-bind="visible: stats.table().length")
       thead
         tr
@@ -202,6 +139,7 @@ html(lang="de")
       tbody(data-bind="foreach: {data: stats.table, as: 'row'}")
         tr(data-bind="foreach: row")
           td(data-bind="html: formatRowContent($data, $index(), row[0])")
+
     #files
       if files.length<1
         | Es sind noch keine Karten vorhanden
@@ -210,6 +148,7 @@ html(lang="de")
         |  
         a(href="javascript: loadMap('"+f+"')")= f
         br
+
 
     if node_env=="development"
       // livereload snippet

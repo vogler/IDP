@@ -1,5 +1,5 @@
 //- globals: map, path, anim, file, track, heatmap, markers, lines
-$(document).ready(function() {
+$(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
   }else{
@@ -49,13 +49,12 @@ $(document).ready(function() {
   }
 
   // controls
-  // style of accordion but more than one active panel possible
+  // style of jquery-ui accordion but more than one active panel possible
   //- $('#controls').addClass('ui-accordion ui-widget ui-helper-reset');
   $('#controls > h3').addClass('ui-accordion-header ui-helper-reset ui-state-default ui-corner-all')
-    .css('padding', '.3em .7em').click(function(){$(this).next().slideToggle()})
+    .click(function(){$(this).next().slideToggle()})
     .first().css('margin-top', 0);
-  $('#controls > div').addClass('ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom')
-    .css('padding', '.7em');
+  $('#controls > div').addClass('ui-widget-content ui-corner-bottom');
 
   // submit forms on file select
   $(':file').change(function(){
@@ -147,10 +146,10 @@ $(document).ready(function() {
   $( "#speed" ).text(anim.speed);
 
   // colorpicker
-  $('#colorSelector').val(strokeColor).addClass('black').hide().miniColors({
-    readonly: true, opacity: true, 
-    change: function(hex, rgba){
-      path.setOptions({strokeColor: hex, strokeOpacity: rgba.a});
+  $('#colorSelector').minicolors({
+    defaultValue: strokeColor, textfield: false, opacity: true, position: 'left',
+    change: function(hex, opacity){
+      path.setOptions({strokeColor: hex, strokeOpacity: opacity});
     }
   });
 
