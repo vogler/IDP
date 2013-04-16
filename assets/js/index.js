@@ -336,7 +336,7 @@ function geocode() {
 }
 
 function tooltips(attr){
-  var tooltips = $('#tooltips').attr('checked', attr == 'show' ? true : undefined).attr('checked');
+  var tooltips = $('#tooltips').is(':checked');
   $('#controls a[rel = "tooltip"]').tooltip(attr ? attr : tooltips ? null : 'destroy');
 }
 

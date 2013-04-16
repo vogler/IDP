@@ -15,12 +15,14 @@ html(lang="de")
     script(src="js/sugar-locale-de.js")
     script(src="js/knockout-2.2.0.js")
     script(src="js/knockout.mapping-latest.js")
+    script(src="js/routie.min.js")
     != css('index')
     != js('fixes')
     != js('index')
     script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
     script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
     != js('models')
+    != js('routes')
   body
     #layoutMenu.dropdown
       a.btn.btn-mini.dropdown-toggle(data-toggle="dropdown")
@@ -119,7 +121,7 @@ html(lang="de")
           label.checkbox.pull-left
             input#tooltips(type="checkbox", checked, onclick='tooltips()')
             | Tooltips &nbsp;
-          i.icon-eye-open(onclick="tooltips('show')")
+          i.icon-eye-open(onmouseover="tooltips('show')", onmouseout="tooltips('hide')")
 
     #map_canvas
 
@@ -146,7 +148,7 @@ html(lang="de")
       each f in files
         a.btn.btn-mini(href="/map/"+f) JSON
         |  
-        a(href="javascript: loadMap('"+f+"')")= f
+        a(href="#map/"+f)= f
         br
 
 

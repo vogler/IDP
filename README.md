@@ -14,12 +14,13 @@ __Server:__
 __Client:__
 [Google Maps JS API V3](https://developers.google.com/maps/documentation/javascript/?hl=de),
 [jQuery](http://jquery.com/),
-[jQuery UI](http://jqueryui.com/),
+[jQuery UI](http://jqueryui.com/) (Custom: Accordion, Slider, Spinner),
 [Twitter Bootstrap](http://twitter.github.com/bootstrap/),
 [Knockout](http://knockoutjs.com),
 ~~[Sugar](http://sugarjs.com/)~~,
 [ColorPicker](http://www.abeautifulsite.net/blog/2011/02/jquery-minicolors-a-color-selector-for-input-controls/),
-[bootstrap-filestyle](http://markusslima.github.com/bootstrap-filestyle/)
+[bootstrap-filestyle](http://markusslima.github.com/bootstrap-filestyle/),
+[Routie](http://projects.jga.me/routie/)
 
 
 # Installation
