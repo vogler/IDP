@@ -37,6 +37,7 @@ html(lang="de")
         button.close(data-dismiss="modal", aria-hidden="true") x
         h3 Baustellen
       .modal-body.span4
+        h5(data-bind="visible: baustellen().length==0") Es wurden noch keine Baustellen angelegt!
         ul.unstyled(data-bind="foreach: baustellen, visible: baustellen().length > 0")
           li
             span(data-bind="visible: !editing(), text: name, event: { dblclick: $parent.editItem }")
@@ -58,7 +59,7 @@ html(lang="de")
       div
         .form-inline
           select.input-medium(data-bind="options: baustellen, optionsText: 'name', value: baustelle, event: { change: loadGates}")
-          a.btn(href='#baustellen', data-toggle='modal'): i.icon-cog
+          a.btn(data-target='#baustellen', data-toggle='modal'): i.icon-cog
         div(data-bind="visible: baustelle")
           form(action="/upload", method="post", enctype="multipart/form-data")
             input(type='file', name='map2')
@@ -74,8 +75,8 @@ html(lang="de")
         a.btn.active(
           data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
           onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(); }")
-      h3 Karte
-      div
+      h3(data-bind="visible: loadedMap") Karte
+      div(data-bind="visible: loadedMap")
         | Datum: 
         small#time_date
         br

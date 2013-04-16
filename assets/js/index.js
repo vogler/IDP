@@ -1,4 +1,4 @@
-//- globals: map, path, anim, file, track, heatmap, markers, lines
+//- globals: map, path, anim, track, heatmap, markers, lines
 $(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -62,7 +62,7 @@ $(function() {
   });
   // bootstrap-filestyle
   $(":file").filestyle({ 
-    buttonText: 'Karte hochladen',
+    buttonText: 'Karten hochladen',
     textField: false,
     icon: true,
   });
@@ -83,7 +83,7 @@ $(function() {
         $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
           // TODO change model to baustelle.gates
           var item = {baustelle: baustellenViewModel.baustelle()._id(),
-            i: gates.length, file: file,
+            i: gates.length, file: loadedMap(),
             path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
           };
           console.log(item);
@@ -206,8 +206,8 @@ function getExcludedGates(){
 }
 
 function loadMap(file){ // reloads if file is undefined
-  if(!file) file = window.file
-  else window.file = file;
+  if(!file) file = loadedMap();
+  else loadedMap(file);
   anim_stop();
   var excluded = getExcludedGates();
   $.getJSON('/map/' + file, {excluded: JSON.stringify(excluded)}, function(json){
@@ -358,7 +358,7 @@ function toggleHeatmap() {
 
 function downloadCSV(){
   var excl = getExcludedGates();
-  req = '/map/csv/'+file;
+  req = '/map/csv/'+loadedMap();
   if(excl.length)
     req += '?' + $.param({excluded: JSON.stringify(excl)});
   console.log(req);

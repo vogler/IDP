@@ -1,4 +1,5 @@
 stats = ko.mapping.fromJS({info: [], table: [], allGates: [], intersectedGates: [], intersectedGatesOrg: []});
+loadedMap = ko.observable("");
 function BaustellenViewModel() {
   // Data
   var self = this;
@@ -16,14 +17,19 @@ function BaustellenViewModel() {
     item.editing = ko.observable(false);
   });
 
+  // self.baustellen.subscribe(function(updated){
+  //   console.log(updated);
+  //   if(updated.length == 0){
+  //     $('#baustellen').modal('show');
+  //   }
+  // });
+
   // Operations
   self.addItem = function() {
     var name = this.newItem();
     $.post(url, {name: name}, function(item){
-      item.editing = ko.observable(false);
-      self.baustellen.push(item);
-      // update mapping (makes fields of new item observable too)
-      ko.mapping.fromJS(ko.mapping.toJS(self.baustellen), self.baustellen);
+      item.editing = false;
+      self.baustellen.push(ko.mapping.fromJS(item));
       self.newItem("");
       console.log("added", item._id);
     });
@@ -57,6 +63,9 @@ function BaustellenViewModel() {
 $(function() {
   baustellenViewModel = new BaustellenViewModel();
   ko.applyBindings(baustellenViewModel);
+  if(baustellenViewModel.baustellen().length == 0){
+    $('#baustellen').modal('show');
+  }
 });
 
 function formatRowContent(data, index, row){

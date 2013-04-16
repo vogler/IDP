@@ -25,7 +25,7 @@ compileStyl = (req, res, next) ->
 app.configure ->
   # app.use(express.logger());
   app.set "port", process.env.PORT or 3000
-  app.set "views", __dirname + ""
+  app.set "views", __dirname + "/views"
   app.use express.bodyParser() # needed for req.files
   app.use express.methodOverride() # hidden input _method for put/del
   # called before caching of connect-assets (only recompiles if css() is called (i.e. whole page is reloaded) -> breaks livereload for css)
@@ -131,6 +131,9 @@ app.get "/", (req, res) ->
         files: files
         baustellen: items
         node_env: process.env.NODE_ENV ? "development"
+
+app.get "/view/:file", (req, res) ->
+  res.render req.params.file+".jade"
 
 app.get "/maps", (req, res) ->
   fs.readdir paths.json, (err, files) ->
