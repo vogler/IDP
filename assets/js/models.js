@@ -76,9 +76,22 @@ $(function() {
 });
 
 function formatRowContent(data, index, row){
+  if(!index && row == 'Zeiten') return data+'<br/><span class="muted">(Uhrzeit: Dauer)</span>';
   if(!index || row == 'Anzahl') return data;
-  if(data instanceof Array)
-    return data.map(function(x){return duration(x)}).join('<br>');
-  else
+  if(data instanceof Array){ // Zeiten
+    // var mean = stats.table()[2][index];
+    var info = stats.info()[index-1];
+    if(info){
+      var mean = info.mean(); var max = info.max();
+    }
+    return data.map(function(x){
+      if(info){
+        var red = parseInt(Math.max(0, x[1]-mean)/(max-mean)*255);
+        var style = ' style="color: rgb('+red+' , 0, 0)"';
+      }
+      return '<span class="muted">'+Date.create(x[0]*1000).format('{24hr}:{mm}')+': </span><span'+style+'>'+duration(x[1])+'</span>';
+    }).join('<br>');
+  }else{
     return duration(data);
+  }
 }

@@ -186,18 +186,19 @@ app.get "/map/:format?/:file", (req, res) ->
         map.intersections.reduce (a, b) ->
           stats[a.gate] ?= {}
           stats[a.gate][b.gate] ?= times: []
-          stats[a.gate][b.gate].times.push b.time-a.time
+          stats[a.gate][b.gate].times.push [map.startTime+a.time, b.time-a.time]
           b
       map.stats = info: [], table: []
       for g1,v1 of stats
         for g2,v2 of v1
-          v2.times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
-          sum = v2.times.reduce ((a,b) -> a+b), 0
           n = v2.times.length
+          diffs = v2.times.map ([a, diff]) -> diff
+          # v2times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
+          sum = diffs.reduce ((a,b) -> a+b), 0
           mean = sum/n
-          ssd = if v2.times.length<2 then 0 else v2.times.reduce (a,b) -> a + Math.pow(b-mean, 2)
+          ssd = if n<2 then 0 else diffs.reduce (a,b) -> a + Math.pow(b-mean, 2)
           stdev = Math.sqrt(1/(n-1)*ssd)
-          map.stats.info.push from: g1, to: g2, times: v2.times, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev)
+          map.stats.info.push from: g1, to: g2, times: v2.times, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
       # map.gates = gates
       # need to gather data in rows for Knockout-template :(
       map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.times.length),

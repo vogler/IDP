@@ -145,7 +145,7 @@ html(lang="de")
           // /ko 
       tbody(data-bind="foreach: {data: stats.table, as: 'row'}")
         tr(data-bind="foreach: row")
-          td(data-bind="html: formatRowContent($data, $index(), row[0])")
+          td(style="white-space: nowrap", data-bind="html: formatRowContent($data, $index(), row[0])")
 
     #files
       span(data-bind="if: db_files().length==0") Es sind noch keine Karten vorhanden

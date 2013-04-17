@@ -43,9 +43,9 @@ $(function() {
       });
     });
 
-    if(db_files().length){
-      loadMap(db_files().first());
-    }
+    // if(db_files().length){
+    //   loadMap(db_files().first());
+    // }
   }
 
   // controls
