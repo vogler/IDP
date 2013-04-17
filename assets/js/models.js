@@ -53,9 +53,9 @@ function BaustellenViewModel() {
     } else if(ko.toJSON(item) != self.oldItem) { // only update on change
       var tmp = item.editing;
       delete item.editing; // don't save this helper field
-      $.put(url, item, function(data){
+      $.put(url+'/'+item._id(), {$set: item}, function(data){
         item.editing = tmp; // restore field
-        console.log("saved", data._id);
+        console.log("updated", item._id());
       });
     }
   };

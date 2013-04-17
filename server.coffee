@@ -114,11 +114,14 @@ app.post "/db/:collection", (req, res) ->
     console.log 'post', req.params.collection, req.body
     res.json req.body
 
-# offered to remain RESTful
-app.put "/db/:collection", (req, res) ->
-  req.body._id = db.ObjectID.createFromHexString(req.body._id)
-  db.collection(req.params.collection).updateById req.body._id, req.body, (err, result) ->
-    console.log 'put ', req.params.collection, req.body
+# offered to remain RESTful and do stuff like $set, $push etc.
+app.put "/db/:collection/:id", (req, res) ->
+  # req.body._id = db.ObjectID.createFromHexString(req.body._id)
+  id = db.ObjectID.createFromHexString(req.params.id)
+  if req.body.$set?._id? # editing _id is not allowed in mongo for $set
+    delete req.body.$set._id
+  db.collection(req.params.collection).updateById id, req.body, (err, result) ->
+    console.log 'put ', req.params.collection+'/'+id, req.body
     res.json req.body
 
 

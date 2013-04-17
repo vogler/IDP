@@ -29,7 +29,7 @@ $(function() {
     });
 
     heatmap = new google.maps.visualization.HeatmapLayer({
-      data: path.getPath()
+      // data: path.getPath()
     });
 
     // create markers with letters from A to J
