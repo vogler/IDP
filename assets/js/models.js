@@ -59,6 +59,13 @@ function BaustellenViewModel() {
       });
     }
   };
+
+  self.fadeIn = function(element, index, data) {
+    // console.log(element, index, data);
+    // $(element).animate({ backgroundColor: 'yellow' }, 200)
+    //           .animate({ backgroundColor: 'white' }, 800);
+    $(element).hide().fadeIn();
+  };
 }
 $(function() {
   baustellenViewModel = new BaustellenViewModel();

@@ -5,12 +5,14 @@ html(lang="de")
     link(href="css/bootstrap.min.css", rel="stylesheet", media="screen")
     link(href="css/smoothness/jquery-ui-1.10.2.custom.min.css", rel="stylesheet")
     link(href="jquery.minicolors/jquery.minicolors.css", rel="stylesheet")
+    link(href="jquery-file-upload/css/jquery.fileupload-ui.css", rel="stylesheet")
     script(src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization")
     script(src="js/jquery-1.9.1.min.js")
     script(src="js/jquery-ui-1.10.2.custom.min.js")
     script(src="jquery.minicolors/jquery.minicolors.js")
     script(src="js/bootstrap.min.js")
-    script(src="js/bootstrap-filestyle-0.1.0.min.js")
+    script(src="jquery-file-upload/js/vendor/jquery.ui.widget.js")
+    script(src="jquery-file-upload/js/jquery.fileupload.js")
     script(src="js/sugar-1.3.9.min.js")
     script(src="js/sugar-locale-de.js")
     script(src="js/knockout-2.2.0.js")
@@ -54,15 +56,17 @@ html(lang="de")
       h3 Upload
       div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
         form(action="/upload", method="post", enctype="multipart/form-data")
-          input(type='file', name='map')
+          input(type='file', name='map2')
       h3 Baustelle
       div
         .form-inline
           select.input-medium(data-bind="options: baustellen, optionsText: 'name', value: baustelle, event: { change: loadGates}")
           a.btn(data-target='#baustellen', data-toggle='modal'): i.icon-cog
         div(data-bind="visible: baustelle")
-          form(action="/upload", method="post", enctype="multipart/form-data")
-            input(type='file', name='map2')
+          span.btn.fileinput-button
+            i.icon-folder-open
+            |  Karte hochladen
+            input(type='file', name='maps[]', data-url="/upload", multiple)
           ul.unstyled.inline
             li 
               a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
@@ -144,13 +148,12 @@ html(lang="de")
           td(data-bind="html: formatRowContent($data, $index(), row[0])")
 
     #files
-      if files.length<1
-        | Es sind noch keine Karten vorhanden
-      each f in files
-        a.btn.btn-mini(href="/map/"+f) JSON
-        |  
-        a(href="#map/"+f)= f
-        br
+      span(data-bind="if: db_files().length==0") Es sind noch keine Karten vorhanden
+      ul.unstyled(data-bind="foreach: {data: db_files, afterAdd: fadeIn}")
+        li
+          a.btn.btn-mini(data-bind="attr: {href: '/map/'+$data}") JSON
+          |  
+          a(data-bind="text: $data, attr: {href: '#map/'+$data}")
 
 
     if node_env=="development"

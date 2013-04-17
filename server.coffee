@@ -235,34 +235,36 @@ moveFile = (src, dst, callback) ->
     else callback()
 
 app.post "/upload", (req, res) ->
-  file = req.files.map
-  eyes.inspect file
-  pathUpload  = paths.uploads + file.name
-  pathGpx     = paths.gpx     + file.name + ".gpx"
-  pathJson    = paths.json    + file.name + ".gpx"
-  moveFile file.path, pathUpload, (err) ->
-    cmd = 'java -jar RouteConverterCmdLine.jar "' + pathUpload + '" Gpx11Format "' + pathGpx + '"'
-    console.log cmd
-    exec cmd, (error, stdout, stderr) ->
-      sys.print "stdout: " + stdout
-      fs.readFile pathGpx, (err, data) ->
-        xmlParser.parseString data, (err, result) ->
-          # console.dir(result);
-          # eyes.inspect(result);
-          startTime = 0
-          track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
-            startTime = Date.parse(x.time[0])/1000 if !startTime
-            lat: x.$.lat
-            lng: x.$.lon
-            ele: x.ele[0]
-            time: Date.parse(x.time[0])/1000-startTime
-          )
-          map =
-            startTime: startTime
-            endTime: startTime + track[track.length-1].time
-            track: track
-          fs.writeFile pathJson, JSON.stringify(map), (err) ->
-            res.redirect "back"
+  for file in req.files.maps # not really needed since jquery-file-upload sends each file separately
+    eyes.inspect file
+    pathUpload  = paths.uploads + file.name
+    pathGpx     = paths.gpx     + file.name + ".gpx"
+    pathJson    = paths.json    + file.name + ".gpx"
+    moveFile file.path, pathUpload, (err) ->
+      cmd = 'java -jar RouteConverterCmdLine.jar "' + pathUpload + '" Gpx11Format "' + pathGpx + '"'
+      console.log cmd
+      exec cmd, (error, stdout, stderr) ->
+        sys.print "stdout: " + stdout
+        fs.readFile pathGpx, (err, data) ->
+          xmlParser.reset()
+          xmlParser.parseString data, (err, result) ->
+            # console.dir(result);
+            # eyes.inspect(result);
+            startTime = 0
+            track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
+              startTime = Date.parse(x.time[0])/1000 if !startTime
+              lat: x.$.lat
+              lng: x.$.lon
+              ele: x.ele[0]
+              time: Date.parse(x.time[0])/1000-startTime
+            )
+            map =
+              startTime: startTime
+              endTime: startTime + track[track.length-1].time
+              track: track
+            fs.writeFile pathJson, JSON.stringify(map), (err) ->
+              # res.redirect "back"
+              res.json file.name + ".gpx"
 
 
 app.listen app.get("port"), () ->

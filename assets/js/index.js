@@ -61,10 +61,13 @@ $(function() {
     $(this).parents('form').submit();
   });
   // bootstrap-filestyle
-  $(":file").filestyle({ 
-    buttonText: 'Karten hochladen',
-    textField: false,
-    icon: true,
+  $(":file").fileupload({
+    dataType: 'json',
+    done: function(e, data){
+      console.log('uploaded', data.files[0].name, ', response:', data.result);
+      db_files.push(data.result);
+      routie('map/'+data.result);
+    }
   });
 
   // gates
