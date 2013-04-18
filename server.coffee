@@ -83,7 +83,8 @@ db.open (err, db) ->
     console.log "connected to " + mongoUri
 
 # collections
-baustellen = db.collection("baustellen")
+dbSites = db.collection("sites")
+dbTrucks = db.collection("trucks")
 
 # REST access to database
 app.get "/db", (req, res) ->
@@ -129,11 +130,13 @@ app.put "/db/:collection/:id", (req, res) ->
 app.get "/", (req, res) ->
   fs.readdir paths.json, (err, files) ->
     files ?= []
-    baustellen.findItems {}, sort: "name", (err, items) ->
-      res.render "index.jade",
-        files: files
-        baustellen: items
-        node_env: process.env.NODE_ENV ? "development"
+    dbSites.findItems {}, sort: "name", (err, sites) ->
+      dbTrucks.findItems {}, {}, (err, trucks) ->
+        res.render "index.jade",
+          sites: sites
+          trucks: trucks
+          files: files
+          node_env: process.env.NODE_ENV ? "development"
 
 app.get "/view/:file", (req, res) ->
   res.render req.params.file+".jade"
@@ -227,6 +230,22 @@ app.get "/map/:format?/:file", (req, res) ->
       else
         res.json map
 
+app.del "/map/:file", (req, res) ->
+  fs.unlink req.params.file, (err) ->
+    if err
+      res.send 404
+    else
+      res.send 200
+
+app.del "/map/:file?", (req, res) ->
+  tracks = if req.params.file then [file: req.params.file] else req.body?.tracks ? []
+  for track in tracks
+    file = track.file
+    fs.unlinkSync paths.uploads + file
+    fs.unlinkSync paths.gpx + file
+    fs.unlinkSync paths.json + file
+  res.send 200
+
 moveFile = (src, dst, callback) ->
   fs.rename src, dst, (err) -> # renameSync doesn't work on Linux if the file is moved between volumes (e.g. from /tmp...)
     if err
@@ -250,7 +269,7 @@ app.post "/upload", (req, res) ->
       exec cmd, (error, stdout, stderr) ->
         sys.print "stdout: " + stdout
         fs.readFile pathGpx, (err, data) ->
-          xmlParser.reset()
+          # xmlParser.reset()
           xmlParser.parseString data, (err, result) ->
             # console.dir(result);
             # eyes.inspect(result);

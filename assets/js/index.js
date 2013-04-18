@@ -57,14 +57,26 @@ $(function() {
   $('#controls > div').addClass('ui-widget-content ui-corner-bottom');
 
   // submit forms on file select
-  $(':file').change(function(){
-    $(this).parents('form').submit();
-  });
+  // $(':file').change(function(){
+  //   $(this).parents('form').submit();
+  // });
   // bootstrap-filestyle
   $(":file").fileupload({
-    dataType: 'json',
+    dataType: 'json', // response
+    add: function (e, data) {
+      // console.log(data);
+      data.context = $('<button/>').text('Upload')
+          .appendTo(document.body)
+          .click(function () {
+              data.context = $('<p/>').text('Uploading...').replaceAll($(this));
+              data.submit();
+          });
+      uploads.push({file: data.files[0].name, data: data});
+      $('#uploads').modal('show');
+    },
     done: function(e, data){
       console.log('uploaded', data.files[0].name, ', response:', data.result);
+      data.context.text('Upload finished.');
       db_files.push(data.result);
       routie('map/'+data.result);
     }
@@ -83,9 +95,9 @@ $(function() {
         var line = drawLine(path);
 
         // TODO hack
-        $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
-          // TODO change model to baustelle.gates
-          var item = {baustelle: baustellenViewModel.baustelle()._id(),
+        $.getJSON('/db/gates', {query: JSON.stringify({site: sitesViewModel.site()._id()})}, function(gates){
+          // TODO change model to site.gates
+          var item = {site: sitesViewModel.site()._id(),
             i: gates.length, file: loadedMap(),
             path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
           };
@@ -181,8 +193,8 @@ function drawLine(path){
 
 lines = [];
 function loadGates(){
-  console.log(baustellenViewModel.baustelle()._id());
-  $.getJSON('/db/gates', {query: JSON.stringify({baustelle: baustellenViewModel.baustelle()._id()})}, function(gates){
+  console.log("loadGates", sitesViewModel.site()._id());
+  $.getJSON('/db/gates', {query: JSON.stringify({site: sitesViewModel.site()._id()})}, function(gates){
     // hide all markers first
     markers.each(function(marker){marker.setMap(null)});
     // hide all lines

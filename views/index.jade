@@ -21,7 +21,8 @@ html(lang="de")
     != css('index')
     != js('fixes')
     != js('index')
-    script!= 'db_baustellen = ko.mapping.fromJS(' + JSON.stringify(baustellen) + ')'
+    script!= 'db_sites = ko.mapping.fromJS(' + JSON.stringify(sites) + ')'
+    script!= 'db_trucks = ko.mapping.fromJS(' + JSON.stringify(trucks) + ')'
     script!= 'db_files = ko.mapping.fromJS(' + JSON.stringify(files) + ')'
     != js('models')
     != js('routes')
@@ -34,52 +35,96 @@ html(lang="de")
         li: a(onclick="$('#infoTable').toggle()") Tabellen
         li: a(onclick="$('#files').toggle()") Dateiliste
 
-    #baustellen.modal.fade.hide
+    #sites.modal.fade.hide
       .modal-header
         button.close(data-dismiss="modal", aria-hidden="true") x
-        h3 Baustellen
+        h3 Verwaltung
       .modal-body.span4
-        h5(data-bind="visible: baustellen().length==0") Es wurden noch keine Baustellen angelegt!
-        ul.unstyled(data-bind="foreach: baustellen, visible: baustellen().length > 0")
-          li
-            span(data-bind="visible: !editing(), text: name, event: { dblclick: $parent.editItem }")
-            input(data-bind="visible: editing(), value: name, hasfocus: editing(), valueUpdate: 'afterkeydown', enterKey: $parent.stopEditing, event: { blur: $parent.stopEditing }")
-            a.pull-right(data-bind="click: $parent.removeItem"): i.icon-trash
-            a.pull-right(data-bind="click: $parent.editItem"): i.icon-pencil
-        form(data-bind="submit: addItem", onsubmit="$(this).find('input:first').focus()")
-          .input-append
-            input.span2(type='text', data-bind="value: newItem", placeholder='Name...', autofocus)
-            a.btn(onclick="$(this).parents('form:first').submit()"): i.icon-plus
-            input.btn(type='submit', value='hinzufügen')
+        ul.nav.nav-tabs
+          li.active: a(href="#sitesTab", data-toggle="tab") Baustellen
+          li: a(href="#trucksTab", data-toggle="tab") LKWs
+        .tab-content
+          #sitesTab.tab-pane.active
+            h5(data-bind="visible: sites().length==0") Es wurden noch keine Baustellen angelegt!
+            ul.unstyled(data-bind="foreach: {data: sites, as: 'site'}, visible: sites().length > 0")
+              li
+                span(data-bind="visible: !editing(), text: name, event: { dblclick: $parent.editItem }")
+                input(data-bind="visible: editing(), value: name, hasfocus: editing(), valueUpdate: 'afterkeydown', enterKey: $parent.stopEditing, event: { blur: $parent.stopEditing }")
+                a.pull-right(data-bind="click: $parent.removeItem"): i.icon-trash
+                a.pull-right(data-bind="click: $parent.editItem"): i.icon-pencil
+                ul(data-bind="foreach: site.tracks")
+                  li
+                    span(data-bind="text: file")
+                    a.pull-right(data-bind="click: $root.removeTrack.bind($data, site)"): i.icon-trash
+            form(data-bind="submit: addItem", onsubmit="$(this).find('input:first').focus()")
+              .input-append
+                input.span2(type='text', data-bind="value: newItem", placeholder='Name...', autofocus)
+                //- a.btn(onclick="$(this).parents('form:first').submit()"): i.icon-plus
+                input.btn(type='submit', value='hinzufügen')
+          #trucksTab(data-bind="with: trucksViewModel").tab-pane
+            h5(data-bind="visible: trucks().length==0") Es wurden noch keine LKW-Typen angelegt!
+            ul.unstyled(data-bind="foreach: {data: trucks, as: 'truckType'}")
+              li
+                span(data-bind="text: name")
+                span.muted(data-bind="text: ' ('+volume()+', '+speed()+')'")
+                a.pull-right(data-bind="click: $parent.removeTruckType"): i.icon-trash
+                ul(data-bind="foreach: truckType.list")
+                  li
+                    span(data-bind="text: name")
+                    a.pull-right(data-bind="click: $parents[1].removeTruck.bind($data, truckType)"): i.icon-trash
+            hr
+            form(data-bind="submit: addTruckType")
+              input(type='text', data-bind="value: newTruckType.name", placeholder='Name...')
+              input(type='text', data-bind="value: newTruckType.volume", placeholder='Volumen...')
+              input(type='text', data-bind="value: newTruckType.speed", placeholder='Geschwindigkeit...')
+              input.btn(type='submit', value='hinzufügen')
+            form(data-bind="submit: addTruck, visible: trucks().length")
+              select.input-medium(data-bind="options: trucks, optionsText: 'name', value: newTruck.truckType, optionsCaption: 'auswählen...'")
+              input(type='text', data-bind="value: newTruck.name", placeholder='Name...')
+              input.btn(type='submit', value='hinzufügen')
+
+    #uploads.modal.fade.hide
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true") x
+        h3 Upload
+      .modal-body.span4
+        //- h5(data-bind="text: 'Baustelle: '+site.name()")
+        table.table.table-condensed
+          thead
+            tr
+              th Track
+              th LKW
+          tbody(data-bind="foreach: uploads")
+            tr
+              td(data-bind="text: $data.file")
+              td
+                select.input-medium.pull-right(data-bind="foreach: trucksViewModel.trucks, value: $data.truck, optionsCaption: 'auswählen...'")
+                  optgroup(data-bind="attr: {label: name}, foreach: list")
+                    option(data-bind="text: name, value: {_id: $parent._id(), name: name()}")
+        h5(data-bind="ifnot: trucksViewModel.trucks().length") Es müssen erst LKWs angelegt werden bevor die Dateien hochgeladen werden können!
+        input.btn.btn-primary.pull-right(data-bind="visible: trucksViewModel.trucks().length>0, click: upload", value='hochladen')
 
     #controls.pull-right.ui-accordion.ui-widget.ui-helper-reset
-      h3 Upload
-      div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
-        form(action="/upload", method="post", enctype="multipart/form-data")
-          input(type='file', name='map2')
       h3 Baustelle
-      div
+      div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
         .form-inline
-          select.input-medium(data-bind="options: baustellen, optionsText: 'name', value: baustelle, event: { change: loadGates}")
-          a.btn(data-target='#baustellen', data-toggle='modal'): i.icon-cog
-        div(data-bind="visible: baustelle")
+          select.input-medium(data-bind="options: sites, optionsText: 'name', value: site, optionsCaption: 'auswählen...', event: { change: loadGates}")
+          a.btn(data-target='#sites', data-toggle='modal'): i.icon-cog
+        div(data-bind="visible: site")
           span.btn.fileinput-button
             i.icon-folder-open
-            |  Karte hochladen
+            |  Karten hochladen
             input(type='file', name='maps[]', data-url="/upload", multiple)
           ul.unstyled.inline
             li 
               a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
               |  Gates
-            li
-              a.btn.btn-mini#btn_area(rel="tooltip", title="bla"): i.icon-plus
-              |  Area
-      h3 Gates
-      #gates(data-bind="foreach: stats.allGates")
+      h3(data-bind="visible: site") Gates
+      #gates(data-bind="visible: site, foreach: stats.allGates")
         a.btn.active(
           data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
           onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(); }")
-      h3(data-bind="visible: loadedMap") Karte
+      h3(data-bind="visible: loadedMap") Track
       div(data-bind="visible: loadedMap")
         | Datum: 
         small#time_date
@@ -95,6 +140,10 @@ html(lang="de")
         a.btn.btn-small(onclick='geocode()')
           i.icon-flag
           |  reverse geocode
+        br
+        a.btn.btn-small(data-bind="attr: {href: '/map/'+loadedMap()}", rel="tooltip", title="Alle Daten als JSON anzeigen")
+          i.icon-file
+          | JSON
         a.btn.btn-small(onclick="downloadCSV()", rel="tooltip", title="Auswertung als CSV herunterladen")
           i.icon-file
           | CSV
@@ -147,13 +196,13 @@ html(lang="de")
         tr(data-bind="foreach: row")
           td(style="white-space: nowrap", data-bind="html: formatRowContent($data, $index(), row[0])")
 
-    #files
+    #files.pull-right
       span(data-bind="if: db_files().length==0") Es sind noch keine Karten vorhanden
       ul.unstyled(data-bind="foreach: {data: db_files, afterAdd: fadeIn}")
         li
-          a.btn.btn-mini(data-bind="attr: {href: '/map/'+$data}") JSON
-          |  
-          a(data-bind="text: $data, attr: {href: '#map/'+$data}")
+          label.checkbox.inline
+            input(type="checkbox", data-bind="attr: {checked: $data==loadedMap()}")
+            a(data-bind="text: $data, attr: {href: '#map/'+$data}")
 
 
     if node_env=="development"

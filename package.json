@@ -2,6 +2,10 @@
   "name": "IDP",
   "version": "0.0.2",
   "private": true,
+  "engines": {
+    "node": ">=0.10.0",
+    "npm": ">=1.1.65"
+  }, 
   "scripts": {
     "prestart": "mongod --dbpath data/db --shutdown; mongod --dbpath data/db --fork --logpath data/db/log",
     "start": "node server",
