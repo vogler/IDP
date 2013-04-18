@@ -108,7 +108,7 @@ html(lang="de")
       h3 Baustelle
       div.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom
         .form-inline
-          select.input-medium(data-bind="options: sites, optionsText: 'name', value: site, optionsCaption: 'auswählen...', event: { change: loadGates}")
+          select.input-medium(data-bind="options: sites, optionsText: 'name', value: site, optionsCaption: 'auswählen...', event: { change: changedSite}")
           a.btn(data-target='#sites', data-toggle='modal'): i.icon-cog
         div(data-bind="visible: site")
           span.btn.fileinput-button
@@ -119,13 +119,14 @@ html(lang="de")
             li 
               a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
               |  Gates
-      h3(data-bind="visible: site")
-        span Gates  
-        a.btn.btn-mini: i.icon-plus
-      #gates(data-bind="visible: site, foreach: stats.allGates")
-        a.btn.active(
-          data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
-          onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(); }")
+      h3(data-bind="visible: site") Gates  
+      #gates(data-bind="visible: site")
+        // ko if: site
+        div(data-bind="foreach: site().gates")
+          a.btn.active(
+            data-bind="text: markers[i()].title, attr: {i: i()}, css: {disabled: stats.intersectedGatesOrg().indexOf(i())==-1}"
+            onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(false, true); }")
+        // /ko
       h3(data-bind="visible: loadedMap") Track
       div(data-bind="visible: loadedMap")
         | Datum: 
@@ -187,7 +188,7 @@ html(lang="de")
       #anim_slider_container
         #anim_slider
 
-    #infoTable.span7: table.table.table-condensed(data-bind="visible: stats.table().length")
+    #infoTable.span7: table.table.table-condensed(data-bind="visible: loadedMap() && stats.table().length")
       thead
         tr
           th Gates

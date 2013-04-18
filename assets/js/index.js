@@ -94,47 +94,45 @@ $(function() {
         var path = [a, b];
         var line = drawLine(path);
 
-        // TODO hack
-        $.getJSON('/db/gates', {query: JSON.stringify({site: sitesViewModel.site()._id()})}, function(gates){
-          // TODO change model to site.gates
-          var item = {site: sitesViewModel.site()._id(),
-            i: gates.length, file: loadedMap(),
-            path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
-          };
-          console.log(item);
-          $.post('/db/gates', item, function(item){
-            console.log("added", item._id);
-          });
+        var gates = sitesViewModel.site().gates;
+        var item = {i: gates().length, file: loadedMap(),
+          path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
+        };
+        $.put('/db/sites/'+sitesViewModel.site()._id(), {$push: {gates: item}}, function(data){
+          gates.push(ko.mapping.fromJS(item));
+          console.log("added", item.i);
         });
+
+        loadMap(false, true); // reload only stats
 
         btn.attr('disabled', false);
       });
     });
   });
-  $('#btn_area').click(function(){
-    var btn = $(this);
-    if(btn.attr('disabled')) return false;
-    btn.attr('disabled', true);
-    google.maps.event.addListenerOnce(map, 'click', function(event) {
-      var a = event.latLng;
-      google.maps.event.addListenerOnce(map, 'click', function(event) {
-        var b = event.latLng;
-        var bounds = new google.maps.LatLngBounds()
-        bounds.extend(a);
-        bounds.extend(b);
-        var rectangle = new google.maps.Rectangle({
-          strokeColor: '#FF0000',
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: '#FF0000',
-          fillOpacity: 0.35,
-          map: map,
-          bounds: bounds
-        });
-        btn.attr('disabled', false);
-      });
-    });
-  });
+  // $('#btn_area').click(function(){
+  //   var btn = $(this);
+  //   if(btn.attr('disabled')) return false;
+  //   btn.attr('disabled', true);
+  //   google.maps.event.addListenerOnce(map, 'click', function(event) {
+  //     var a = event.latLng;
+  //     google.maps.event.addListenerOnce(map, 'click', function(event) {
+  //       var b = event.latLng;
+  //       var bounds = new google.maps.LatLngBounds()
+  //       bounds.extend(a);
+  //       bounds.extend(b);
+  //       var rectangle = new google.maps.Rectangle({
+  //         strokeColor: '#FF0000',
+  //         strokeOpacity: 0.8,
+  //         strokeWeight: 2,
+  //         fillColor: '#FF0000',
+  //         fillOpacity: 0.35,
+  //         map: map,
+  //         bounds: bounds
+  //       });
+  //       btn.attr('disabled', false);
+  //     });
+  //   });
+  // });
 
   // animation
   $('#btn_play').click(function() {
@@ -192,27 +190,44 @@ function drawLine(path){
 }
 
 lines = [];
-function loadGates(){
-  if(!sitesViewModel.site()) return;
-  console.log("loadGates", sitesViewModel.site()._id());
-  $.getJSON('/db/gates', {query: JSON.stringify({site: sitesViewModel.site()._id()})}, function(gates){
-    // hide all markers first
-    markers.each(function(marker){marker.setMap(null)});
-    // hide all lines
-    lines.each(function(line){line.setMap(null)});
-    // draw new gates
-    gates.each(function(gate){
-      var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
-      lines.push(line);
-      var i = parseInt(gate.i);
-      // console.log(gate.i);
-      markers[i].setOptions({
-          position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
-          map: map,
-          // flat: true, 
-          // clickable: false
-      });
+function drawGates(){
+  console.log("drawGates", sitesViewModel.site().name());
+  // hide all markers first
+  markers.each(function(marker){marker.setMap(null)});
+  // hide all lines
+  lines.each(function(line){line.setMap(null)});
+  // draw new gates
+  var gates = ko.mapping.toJS(sitesViewModel.site().gates);
+  gates.each(function(gate){
+    var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
+    lines.push(line);
+    var i = parseInt(gate.i);
+    // console.log(gate.i);
+    markers[i].setOptions({
+        position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
+        map: map,
+        // flat: true, 
+        // clickable: false
     });
+  });
+}
+
+function changedSite(){
+  if(!sitesViewModel.site()) return; // nothing selected
+  routie('site/'+sitesViewModel.site().name()); // set the hashtag (calls loadSite)
+  loadedMap(null);
+  drawGates();
+}
+
+function loadSite(site){
+  if(sitesViewModel.site() && sitesViewModel.site().name() == site) return; // site already selected
+  console.log("loadSite", site);
+  sitesViewModel.sites().filter(function(x){
+    if(x.name() == site){ // names must be unique!
+      sitesViewModel.site(x);
+      changedSite();
+      return;
+    }
   });
 }
 
@@ -221,22 +236,33 @@ function getExcludedGates(){
   return $.map($('#gates :not(.active)'), function(x){return $(x).attr("i")});
 }
 
-function loadMap(file){ // reloads if file is undefined
+function loadMap(file, onlyStats){ // reloads if file is undefined
   if(!file) file = loadedMap();
   else loadedMap(file);
+  if(!file) return;
   anim_stop();
   var excluded = getExcludedGates();
   $.getJSON('/map/' + file, {excluded: JSON.stringify(excluded)}, function(json){
+      // stats
+      ko.mapping.fromJS(json.stats, stats);
+      if(!excluded.length)
+        stats.intersectedGatesOrg(stats.intersectedGates());
+      if(onlyStats) return; // don't redraw everything (e.g. only added gate)
+
       // track
+      console.time("coords");
       var bounds = new google.maps.LatLngBounds();
       var coords = json.track.map(function(x){
         var ll = new google.maps.LatLng(x.lat,x.lng);
         bounds.extend(ll);
         return ll;
       });
+      console.timeEnd("coords");
+      console.time("setPath");
       path.setPath(coords);
       map.fitBounds(bounds);
       track = json.track; // needed to show time in animation
+      console.timeEnd("setPath");
 
       // UI
       $('#time_date').text(Date.create(json.startTime*1000).short('de'));
@@ -244,14 +270,20 @@ function loadMap(file){ // reloads if file is undefined
       $('#time_end').text(Date.create(json.endTime*1000).format('{24hr}:{mm}'));
       $('#time_duration').text((json.endTime-json.startTime).seconds().duration('de'));
 
-      // stats
-      ko.mapping.fromJS(json.stats, stats);
-      if(!excluded.length)
-        stats.intersectedGatesOrg(stats.intersectedGates());
-
       // heatmap
       if(heatmap.getMap())
         heatmap.setData(path.getPath()); // OPT: not necessary if heatmap is deactivated
+
+      // set select if accessed by url
+      if(!sitesViewModel.site()){
+        for(var i=0; i< sitesViewModel.sites().length; i++){ // no foreach with break??
+          var site = sitesViewModel.sites()[i];
+          if(site._id() == json.site){
+            sitesViewModel.site(site);
+            break;
+          }
+        }
+      }
   });
 }
 

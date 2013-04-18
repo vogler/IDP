@@ -10,10 +10,13 @@ function SitesViewModel() {
   //   self.sites(data);
   // });
   self.sites = db_sites;
-  // extend model by empty tracks field :(
+  // extend model by empty lists :(
   ko.utils.arrayForEach(self.sites(), function(item){
     if(!item.tracks){
       item.tracks = ko.observableArray();
+    }
+    if(!item.gates){
+      item.gates = ko.observableArray();
     }
   });
   self.site = ko.observable();

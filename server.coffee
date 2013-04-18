@@ -158,7 +158,10 @@ app.get "/map/:format?/:file", (req, res) ->
       return
     map = JSON.parse data
     # calculate intersections
-    db.collection('gates').findItems (err, gates) -> # file: file, 
+    dbSites.findItems "tracks.file": file, (err, sites) -> # get gates for site that has corresponding track.file -> no dups for filenames!
+      site = sites[0]
+      gates = site?.gates ? [] # maybe there are no gates yet
+      map.site = site._id
       map.intersections = []
       time = 0
       map.track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
@@ -229,13 +232,6 @@ app.get "/map/:format?/:file", (req, res) ->
         res.end()
       else
         res.json map
-
-# app.del "/map/:file", (req, res) ->
-#   fs.unlink req.params.file, (err) ->
-#     if err
-#       res.send 404
-#     else
-#       res.send 200
 
 app.del "/map/:file?", (req, res) ->
   tracks = if req.params.file then [file: req.params.file] else req.body?.tracks ? []
