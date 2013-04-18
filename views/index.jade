@@ -102,7 +102,7 @@ html(lang="de")
                   optgroup(data-bind="attr: {label: name}, foreach: list")
                     option(data-bind="text: name, value: {_id: $parent._id(), name: name()}")
         h5(data-bind="ifnot: trucksViewModel.trucks().length") Es müssen erst LKWs angelegt werden bevor die Dateien hochgeladen werden können!
-        input.btn.btn-primary.pull-right(data-bind="visible: trucksViewModel.trucks().length>0, click: upload", value='hochladen')
+        input.btn.btn-primary.pull-right(data-bind="visible: trucksViewModel.trucks().length>0 && uploads().length, css: {disabled: uploading}, click: upload", value='hochladen')
 
     #controls.pull-right.ui-accordion.ui-widget.ui-helper-reset
       h3 Baustelle
@@ -114,12 +114,14 @@ html(lang="de")
           span.btn.fileinput-button
             i.icon-folder-open
             |  Karten hochladen
-            input(type='file', name='maps[]', data-url="/upload", multiple)
+            input(type='file', name='map', data-url="/upload", multiple)
           ul.unstyled.inline
             li 
               a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
               |  Gates
-      h3(data-bind="visible: site") Gates
+      h3(data-bind="visible: site")
+        span Gates  
+        a.btn.btn-mini: i.icon-plus
       #gates(data-bind="visible: site, foreach: stats.allGates")
         a.btn.active(
           data-bind="text: markers[$data].title, attr: {i: $data}, css: {disabled: stats.intersectedGatesOrg().indexOf($data)==-1}"
@@ -196,13 +198,13 @@ html(lang="de")
         tr(data-bind="foreach: row")
           td(style="white-space: nowrap", data-bind="html: formatRowContent($data, $index(), row[0])")
 
-    #files.pull-right
-      span(data-bind="if: db_files().length==0") Es sind noch keine Karten vorhanden
-      ul.unstyled(data-bind="foreach: {data: db_files, afterAdd: fadeIn}")
+    #files.pull-right(data-bind="if: site")
+      span(data-bind="visible: !site() || site().tracks().length==0") Es sind noch keine Karten vorhanden
+      ul.unstyled(data-bind="foreach: {data: site().tracks, afterAdd: fadeIn}")
         li
           label.checkbox.inline
-            input(type="checkbox", data-bind="attr: {checked: $data==loadedMap()}")
-            a(data-bind="text: $data, attr: {href: '#map/'+$data}")
+            input(type="checkbox", data-bind="attr: {checked: file()==loadedMap()}")
+            a(data-bind="text: file, attr: {href: '#map/'+file()}")
 
 
     if node_env=="development"

@@ -10,8 +10,15 @@ function SitesViewModel() {
   //   self.sites(data);
   // });
   self.sites = db_sites;
+  // extend model by empty tracks field :(
+  ko.utils.arrayForEach(self.sites(), function(item){
+    if(!item.tracks){
+      item.tracks = ko.observableArray();
+    }
+  });
   self.site = ko.observable();
   self.newItem = ko.observable();
+  self.uploading = ko.observable(false);
 
   // extend model by an editing field
   ko.utils.arrayForEach(self.sites(), function(item){
@@ -76,12 +83,13 @@ function SitesViewModel() {
   };
   self.removeTrack = function(site, track) {
     // delete from db
+    console.log('removing track', ko.mapping.toJS(track));
     $.put(url+'/'+site._id(), {$pull: {tracks: ko.mapping.toJS(track)}}, function(data){
       // delete from disk
       $.del('/map/'+track.file(), {}, function(data){
-        site.tracks.remove(track); // destroy marks for deletion
         console.log("removed track", track.file());
       });
+      site.tracks.remove(track); // destroy marks for deletion
     });
   };
 
@@ -135,11 +143,15 @@ function SitesViewModel() {
   }
 
   self.upload = function(){
+    if(self.uploading()) return;
+    self.uploading(true);
     ko.utils.arrayForEach(uploads(), function(item){
       if(!item.truck) return alert("Wählen Sie einen LKW für "+item.file);
     });
     // console.log(uploads());
     ko.utils.arrayForEach(uploads(), function(item){
+      item.data.formData = {site: sitesViewModel.site()._id(), truck: JSON.stringify(item.truck)};
+      console.log("upload",item.data.formData);
       item.data.submit();
     });
   }

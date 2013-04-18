@@ -65,21 +65,21 @@ $(function() {
     dataType: 'json', // response
     add: function (e, data) {
       // console.log(data);
-      data.context = $('<button/>').text('Upload')
-          .appendTo(document.body)
-          .click(function () {
-              data.context = $('<p/>').text('Uploading...').replaceAll($(this));
-              data.submit();
-          });
       uploads.push({file: data.files[0].name, data: data});
       $('#uploads').modal('show');
     },
     done: function(e, data){
       console.log('uploaded', data.files[0].name, ', response:', data.result);
-      data.context.text('Upload finished.');
-      db_files.push(data.result);
-      routie('map/'+data.result);
-    }
+      uploads.shift(); // assumes sequentialUploads
+      sitesViewModel.site().tracks.push(ko.mapping.fromJS(data.result));
+      db_files.push(data.result.file);
+      routie('map/'+data.result.file);
+      if(!uploads().length){
+        $('#uploads').modal('hide');
+        sitesViewModel.uploading(false);
+      }
+    },
+    sequentialUploads: true
   });
 
   // gates
@@ -193,6 +193,7 @@ function drawLine(path){
 
 lines = [];
 function loadGates(){
+  if(!sitesViewModel.site()) return;
   console.log("loadGates", sitesViewModel.site()._id());
   $.getJSON('/db/gates', {query: JSON.stringify({site: sitesViewModel.site()._id()})}, function(gates){
     // hide all markers first

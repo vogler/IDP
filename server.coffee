@@ -230,20 +230,24 @@ app.get "/map/:format?/:file", (req, res) ->
       else
         res.json map
 
-app.del "/map/:file", (req, res) ->
-  fs.unlink req.params.file, (err) ->
-    if err
-      res.send 404
-    else
-      res.send 200
+# app.del "/map/:file", (req, res) ->
+#   fs.unlink req.params.file, (err) ->
+#     if err
+#       res.send 404
+#     else
+#       res.send 200
 
 app.del "/map/:file?", (req, res) ->
   tracks = if req.params.file then [file: req.params.file] else req.body?.tracks ? []
   for track in tracks
     file = track.file
-    fs.unlinkSync paths.uploads + file
-    fs.unlinkSync paths.gpx + file
-    fs.unlinkSync paths.json + file
+    console.log "delete map", file
+    try
+      fs.unlinkSync paths.uploads + file[..-5] # without '.gpx'
+      fs.unlinkSync paths.gpx + file
+      fs.unlinkSync paths.json + file
+    catch err
+      console.log "error deleting map:", err
   res.send 200
 
 moveFile = (src, dst, callback) ->
@@ -258,36 +262,40 @@ moveFile = (src, dst, callback) ->
     else callback()
 
 app.post "/upload", (req, res) ->
-  for file in req.files.maps # not really needed since jquery-file-upload sends each file separately
-    eyes.inspect file
-    pathUpload  = paths.uploads + file.name
-    pathGpx     = paths.gpx     + file.name + ".gpx"
-    pathJson    = paths.json    + file.name + ".gpx"
-    moveFile file.path, pathUpload, (err) ->
-      cmd = 'java -jar RouteConverterCmdLine.jar "' + pathUpload + '" Gpx11Format "' + pathGpx + '"'
-      console.log cmd
-      exec cmd, (error, stdout, stderr) ->
-        sys.print "stdout: " + stdout
-        fs.readFile pathGpx, (err, data) ->
-          # xmlParser.reset()
-          xmlParser.parseString data, (err, result) ->
-            # console.dir(result);
-            # eyes.inspect(result);
-            startTime = 0
-            track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
-              startTime = Date.parse(x.time[0])/1000 if !startTime
-              lat: x.$.lat
-              lng: x.$.lon
-              ele: x.ele[0]
-              time: Date.parse(x.time[0])/1000-startTime
-            )
-            map =
-              startTime: startTime
-              endTime: startTime + track[track.length-1].time
-              track: track
-            fs.writeFile pathJson, JSON.stringify(map), (err) ->
-              # res.redirect "back"
-              res.json file.name + ".gpx"
+  file = req.files.map
+  eyes.inspect file
+  pathUpload  = paths.uploads + file.name
+  pathGpx     = paths.gpx     + file.name + ".gpx"
+  pathJson    = paths.json    + file.name + ".gpx"
+  moveFile file.path, pathUpload, (err) ->
+    cmd = 'java -jar RouteConverterCmdLine.jar "' + pathUpload + '" Gpx11Format "' + pathGpx + '"'
+    console.log cmd
+    exec cmd, (error, stdout, stderr) ->
+      sys.print "stdout: " + stdout
+      fs.readFile pathGpx, (err, data) ->
+        # xmlParser.reset()
+        xmlParser.parseString data, (err, result) ->
+          # console.dir(result);
+          # eyes.inspect(result);
+          startTime = 0
+          track = result.gpx.trk[0].trkseg[0].trkpt.map((x) ->
+            startTime = Date.parse(x.time[0])/1000 if !startTime
+            lat: x.$.lat
+            lng: x.$.lon
+            ele: x.ele[0]
+            time: Date.parse(x.time[0])/1000-startTime
+          )
+          map =
+            startTime: startTime
+            endTime: startTime + track[track.length-1].time
+            track: track
+          fs.writeFile pathJson, JSON.stringify(map), (err) ->
+            id = db.ObjectID.createFromHexString(req.body.site)
+            track = file: file.name + ".gpx", truck: JSON.parse(req.body.truck)
+            update = $push: {tracks: track}
+            dbSites.updateById id, update, (err, result) ->
+              console.log 'update ', 'sites/'+id, update
+              res.json track
 
 
 app.listen app.get("port"), () ->
