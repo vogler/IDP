@@ -1,4 +1,4 @@
-//- globals: map, path, anim, track, heatmap, markers, lines
+//- globals: map, path, anim, track, heatmap, markers, lines, excludedTimes
 $(function() {
   if(!("google" in window)) {
     alert("Couldn't load Google Maps API. Online?\nEverything involving the map won't work");
@@ -103,7 +103,7 @@ $(function() {
           console.log("added", item.i);
         });
 
-        loadMap(false, true); // reload only stats
+        reloadStats();
 
         btn.attr('disabled', false);
       });
@@ -236,20 +236,39 @@ function getExcludedGates(){
   return $.map($('#gates :not(.active)'), function(x){return $(x).attr("i")});
 }
 
+excludedTimes = [];
+function timeExcluded(time){
+  return excludedTimes.indexOf(time) != -1;
+}
+function toggleExcludeTime(time){
+  if(!timeExcluded(time)){ // not yet in array
+    excludedTimes.push(time);
+  }else{ // already in array
+    excludedTimes.remove(time); // remove from sugarjs is nicer than splice
+  }
+  reloadStats();
+}
+
+function reloadStats(){
+  console.log("reloadStats");
+  loadMap(false, true);
+}
+
 function loadMap(file, onlyStats){ // reloads if file is undefined
   if(!file) file = loadedMap();
   else loadedMap(file);
   if(!file) return;
   anim_stop();
-  var excluded = getExcludedGates();
-  $.getJSON('/map/' + file, {excluded: JSON.stringify(excluded)}, function(json){
+  var excludedGates = getExcludedGates();
+  $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes)}, function(json){
       // stats
       ko.mapping.fromJS(json.stats, stats);
-      if(!excluded.length)
+      if(!excludedGates.length)
         stats.intersectedGatesOrg(stats.intersectedGates());
       if(onlyStats) return; // don't redraw everything (e.g. only added gate)
 
       // track
+      console.timeStamp("coords");
       console.time("coords");
       var bounds = new google.maps.LatLngBounds();
       var coords = json.track.map(function(x){
@@ -263,6 +282,7 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       map.fitBounds(bounds);
       track = json.track; // needed to show time in animation
       console.timeEnd("setPath");
+      console.timeStamp("setPath");
 
       // UI
       $('#time_date').text(Date.create(json.startTime*1000).short('de'));
@@ -274,12 +294,13 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       if(heatmap.getMap())
         heatmap.setData(path.getPath()); // OPT: not necessary if heatmap is deactivated
 
-      // set select if accessed by url
+      // set select if accessed by url (get the site._id from the server since a matching from map to site is done there anyway -> saves us extra _id in url)
       if(!sitesViewModel.site()){
         for(var i=0; i< sitesViewModel.sites().length; i++){ // no foreach with break??
           var site = sitesViewModel.sites()[i];
           if(site._id() == json.site){
             sitesViewModel.site(site);
+            drawGates();
             break;
           }
         }
@@ -407,8 +428,8 @@ function toggleHeatmap() {
 function downloadCSV(){
   var excl = getExcludedGates();
   req = '/map/csv/'+loadedMap();
-  if(excl.length)
-    req += '?' + $.param({excluded: JSON.stringify(excl)});
+  if(excl.length || excludedTimes.length)
+    req += '?' + $.param({excluded: JSON.stringify(excl), excludedTimes: JSON.stringify(excludedTimes)});
   console.log(req);
   location.href = req;
 }

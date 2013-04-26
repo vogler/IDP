@@ -146,9 +146,10 @@ app.get "/maps", (req, res) ->
     res.json files
 
 app.get "/map/:format?/:file", (req, res) ->
-  excluded = if req.query.excluded then JSON.parse(req.query.excluded) else []
+  excludedGates = if req.query.excludedGates then JSON.parse(req.query.excludedGates) else []
+  excludedTimes = if req.query.excludedTimes then JSON.parse(req.query.excludedTimes) else []
   file = req.params.file
-  console.log file, req.params.format
+  console.log file, req.params.format, excludedGates, excludedTimes
   pathJson = paths.json + file
   # readStream = fs.createReadStream pathJson
   # util.pump readStream, res # fast, streaming, no whitespaces
@@ -171,7 +172,7 @@ app.get "/map/:format?/:file", (req, res) ->
         time += duration
         for gate in gates # TODO optimization: check bounds to skip calculations?
           # gate.i = parseInt(gate.i)
-          if gate.i in excluded
+          if gate.i in excludedGates
             continue
           gate.path.reduce (c, d, i, arr) ->
             # m2 = (d.lat-c.lat) / (d.lng-c.lng)
@@ -200,17 +201,17 @@ app.get "/map/:format?/:file", (req, res) ->
       map.stats = info: [], table: []
       for g1,v1 of stats
         for g2,v2 of v1
-          n = v2.times.length
-          diffs = v2.times.map ([a, diff]) -> diff
+          diffs = (v2.times.filter ([a, diff]) -> a not in excludedTimes).map ([a, diff]) -> diff # filter_map: don't take excluded times into account
+          n = diffs.length
           # v2times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
           sum = diffs.reduce ((a,b) -> a+b), 0
           mean = sum/n
           ssd = if n<2 then 0 else diffs.reduce (a,b) -> a + Math.pow(b-mean, 2)
           stdev = Math.sqrt(1/(n-1)*ssd)
-          map.stats.info.push from: g1, to: g2, times: v2.times, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
+          map.stats.info.push from: g1, to: g2, times: v2.times, n: n, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
       # map.gates = gates
       # need to gather data in rows for Knockout-template :(
-      map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.times.length),
+      map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.n+'/'+x.times.length),
                    ['Summe'].concat(map.stats.info.map (x) -> x.sum),
                    ['Mittel'].concat(map.stats.info.map (x) -> x.mean),
                    ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),

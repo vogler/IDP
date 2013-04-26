@@ -176,21 +176,24 @@ $(function() {
 
 function formatRowContent(data, index, row){
   if(!index && row == 'Zeiten') return data+'<br/><span class="muted">(Uhrzeit:<br/>Dauer)</span>';
-  if(!index || row == 'Anzahl') return data;
+  if(!index || row == 'Anzahl') return data; // just return the row name or number
   if(data instanceof Array){ // Zeiten
     // var mean = stats.table()[2][index];
-    var info = stats.info()[index-1];
-    if(info){
+    var info = stats.info()[index-1]; // -1 because of row name
+    if(info){ // no infos availabe (e.g. when there are no gates)
       var mean = info.mean(); var max = info.max();
     }
-    return data.map(function(x){
+    return data.map(function(x){ // x[0] is the time, x[1] the duration
       if(info){
         var red = parseInt(Math.max(0, x[1]-mean)/(max-mean)*255);
-        var style = ' style="color: rgb('+red+' , 0, 0)"';
+        var style_duration = ' style="color: rgb('+red+' , 0, 0)"';
       }
-      return '<span class="muted">'+Date.create(x[0]*1000).format('{24hr}:{mm}')+': </span><span'+style+'>'+duration(x[1])+'</span>';
+      var html_time = '<span class="muted">'+Date.create(x[0]*1000).format('{24hr}:{mm}')+': </span>';
+      var html_duration = '<span'+style_duration+'>'+duration(x[1])+'</span>';
+      var style_excluded = timeExcluded(x[0]) ? ' style="text-decoration: line-through"' : '';
+      return '<span'+style_excluded+' onclick="toggleExcludeTime('+x[0]+')">'+html_time+html_duration+'</span>';
     }).join('<br>');
   }else{
-    return duration(data);
+    return duration(data); // everything else is just a single duration
   }
 }
