@@ -3,6 +3,4 @@ builtAssets
 maps/
 data/
 *.exe
-*.sublime-project
-*.sublime-workspace
 notes
