@@ -95,15 +95,17 @@ $(function() {
         var line = drawLine(path);
 
         var gates = sitesViewModel.site().gates;
-        var item = {i: gates().length, file: loadedMap(),
+        var item = {i: gates().length.toString(), file: loadedMap(),
           path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
         };
         $.put('/db/sites/'+sitesViewModel.site()._id(), {$push: {gates: item}}, function(data){
-          gates.push(ko.mapping.fromJS(item));
+          reloadStats(); // there might be new intersections
+          gates.push(ko.mapping.fromJS(item)); // update local site model
+          line.setMap(null); // delete line
+          drawGates(); // draw all gates including the marker for the new gate
           console.log("added", item.i);
         });
 
-        reloadStats();
 
         btn.attr('disabled', false);
       });
@@ -265,7 +267,7 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       ko.mapping.fromJS(json.stats, stats);
       if(!excludedGates.length)
         stats.intersectedGatesOrg(stats.intersectedGates());
-      if(onlyStats) return; // don't redraw everything (e.g. only added gate)
+      if(onlyStats) return; // don't redraw everything (e.g. only added gate or excluded gate or time)
 
       // track
       console.timeStamp("coords");
