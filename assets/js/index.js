@@ -33,13 +33,15 @@ $(function() {
     });
 
     // create markers with letters from A to J
-    markers = (0).upto(9).map(function(i){
+    // after J, the marker image starts at A again - titles go up to Z
+    // hover over marker to see the real title
+    markers = (0).upto(25).map(function(i){
       return new google.maps.Marker({
         title: String.fromCharCode(65 + i),
         zIndex: i+9,
         icon: new google.maps.MarkerImage('img/red_markers_A_J2.png',
           new google.maps.Size(20,34),
-          new google.maps.Point(0,i*34))
+          new google.maps.Point(0,i%9*34))
       });
     });
 
@@ -89,10 +91,15 @@ $(function() {
     btn.attr('disabled', true);
     google.maps.event.addListenerOnce(map, 'click', function(event) {
       var a = event.latLng;
+      var line = drawLine();
+      var mousemoveListener = google.maps.event.addDomListener(map, 'mousemove', function(event) {
+        drawLine([a, event.latLng], line);
+      });
       google.maps.event.addListenerOnce(map, 'click', function(event) {
+        google.maps.event.removeListener(mousemoveListener);
         var b = event.latLng;
         var path = [a, b];
-        var line = drawLine(path);
+        drawLine(path, line);
 
         var gates = sitesViewModel.site().gates;
         var item = {i: gates().length.toString(), file: loadedMap(),
@@ -181,14 +188,19 @@ $(function() {
 });
 
 
-function drawLine(path){
-  return new google.maps.Polyline({
-    path: path,
-    strokeColor: '#FF00FF',
-    strokeOpacity: 0.8,
-    strokeWeight: 5,
-    map: map
-  });
+function drawLine(path, line){
+  if(!path) path = [];
+  if(!line){
+    line = new google.maps.Polyline({
+      clickable: false,
+      strokeColor: '#FF00FF',
+      strokeOpacity: 0.8,
+      strokeWeight: 5,
+      map: map
+    });
+  }
+  line.setPath(path);
+  return line;
 }
 
 lines = [];
