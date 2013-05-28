@@ -125,7 +125,7 @@ html(lang="de")
         div(data-bind="foreach: site().gates")
           a.btn.active(
             data-bind="text: markers[i()].title, attr: {i: i()}, css: {disabled: stats.intersectedGatesOrg().indexOf(i())==-1}"
-            onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); loadMap(false, true); }")
+            onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); reloadStats(); drawGates(); }")
         // /ko
       h3(data-bind="visible: loadedMap") Track
       div(data-bind="visible: loadedMap")

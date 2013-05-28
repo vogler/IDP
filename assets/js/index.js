@@ -208,12 +208,17 @@ function drawGates(){
   console.log("drawGates", sitesViewModel.site().name());
   // hide all markers first
   markers.each(function(marker){marker.setMap(null)});
-  // hide all lines
+  // hide all old lines and then remove them
   lines.each(function(line){line.setMap(null)});
+  lines = [];
   // draw new gates
   var gates = ko.mapping.toJS(sitesViewModel.site().gates);
+  var excluded = getExcludedGates();
   gates.each(function(gate){
     var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
+    if(excluded.indexOf(gate.i) != -1){ // dim excluded gates
+      line.setOptions({strokeColor: "grey", strokeOpacity: 0.5});
+    }
     lines.push(line);
     var i = parseInt(gate.i);
     // console.log(gate.i);
