@@ -5,20 +5,20 @@
   "engines": {
     "node": ">=0.10.0",
     "npm": ">=1.1.65"
-  }, 
+  },
   "scripts": {
     "prestart": "mongod --dbpath data/db --shutdown; mongod --dbpath data/db --fork --logpath data/db/log",
     "start": "node server",
     "poststop": "mongod --dbpath data/db --shutdown"
   },
   "dependencies": {
-    "express": "~3.1.1",
-    "jade": "*",
+    "express": "~3.1.2",
+    "jade": "~0.30.0",
     "stylus": "*",
     "eyes": ">= 0.1.8",
     "mongoskin": ">= 0.4.4",
-    "xml2js": ">= 0.2.2",
-    "connect-assets": ">= 2.3.3",
+    "xml2js": "~0.2.7",
+    "connect-assets": "~2.4.3",
     "coffee-script": ">= 1.4.0"
   }
 }
