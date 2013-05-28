@@ -82,6 +82,8 @@ function SitesViewModel() {
     $.put(url+'/'+site._id(), {$pull: {gates: ko.mapping.toJS(gate)}}, function(data){
       site.gates.remove(gate); // destroy marks for deletion
       console.log("removed gate", gate.i());
+      drawGates();
+      reloadStats();
     });
   };
   self.removeTrack = function(site, track) {

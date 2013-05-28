@@ -44,6 +44,18 @@ $(function() {
           new google.maps.Point(0,i%9*34))
       });
     });
+    for(var i=0; i<markers.length; i++){
+      // https://developer.mozilla.org/en-US/docs/JavaScript/Guide/Closures?redirectlocale=en-US&redirectslug=Core_JavaScript_1.5_Guide%2FClosures#Creating_closures_in_loops.3A_A_common_mistake
+      (function(i){ // create new scope for i, otherwise all closures will have the same value (i.e. the last value i takes in the loop)
+        google.maps.event.addListener(markers[i], 'click', function(event) {
+          // console.log('#gates [i="'+i+'"]', $('#gates [i="'+i+'"]'));
+          // do the same stuff as if the gate button on the right was clicked
+          $('#gates [i="'+i+'"]').button('toggle');
+          drawGates();
+          reloadStats();
+        });
+      })(i);
+    }
 
     // if(db_files().length){
     //   loadMap(db_files().first());
@@ -102,17 +114,27 @@ $(function() {
         drawLine(path, line);
 
         var gates = sitesViewModel.site().gates;
-        var item = {i: gates().length.toString(), file: loadedMap(),
-          path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
-        };
-        $.put('/db/sites/'+sitesViewModel.site()._id(), {$push: {gates: item}}, function(data){
-          reloadStats(); // there might be new intersections
-          gates.push(ko.mapping.fromJS(item)); // update local site model
-          line.setMap(null); // delete line
-          drawGates(); // draw all gates including the marker for the new gate
-          console.log("added", item.i);
+        // i: gates().length.toString() is not a good idea because e.g. delete B from A,B,C then add new gate -> fail: has same i as C
+        // get first free i from server
+        $.getJSON('/db/sites/'+sitesViewModel.site()._id(), {}, function(json){
+          var is = json.gates.map(function(gate){return gate.i});
+          for(var i in (0).upto(25)){
+            if(is.indexOf(i)==-1){
+              // console.log("found free i for gate:", i);
+              var item = {i: i.toString(), file: loadedMap(),
+                path: path.map(function(x){return {lat: x.lat(), lng: x.lng()}})
+              };
+              $.put('/db/sites/'+sitesViewModel.site()._id(), {$push: {gates: item}}, function(data){
+                reloadStats(); // there might be new intersections
+                gates.push(ko.mapping.fromJS(item)); // update local site model
+                line.setMap(null); // delete line
+                drawGates(); // draw all gates including the marker for the new gate
+                console.log("added", item.i);
+              });
+              break;
+            }
+          }
         });
-
 
         btn.attr('disabled', false);
       });
@@ -205,28 +227,34 @@ function drawLine(path, line){
 
 lines = [];
 function drawGates(){
-  console.log("drawGates", sitesViewModel.site().name());
+  var site = sitesViewModel.site();
+  console.log("drawGates", site.name());
   // hide all markers first
   markers.each(function(marker){marker.setMap(null)});
   // hide all old lines and then remove them
   lines.each(function(line){line.setMap(null)});
   lines = [];
   // draw new gates
-  var gates = ko.mapping.toJS(sitesViewModel.site().gates);
   var excluded = getExcludedGates();
-  gates.each(function(gate){
+  site.gates().each(function(gateKO){
+    var gate = ko.mapping.toJS(gateKO);
     var line = drawLine(gate.path.map(function(x){return new google.maps.LatLng(x.lat,x.lng)}));
     if(excluded.indexOf(gate.i) != -1){ // dim excluded gates
       line.setOptions({strokeColor: "grey", strokeOpacity: 0.5});
     }
     lines.push(line);
     var i = parseInt(gate.i);
-    // console.log(gate.i);
     markers[i].setOptions({
         position: new google.maps.LatLng(gate.path.first().lat, gate.path.first().lng),
         map: map,
         // flat: true, 
         // clickable: false
+    });
+    // remove gate upon rightclick on marker
+    // remove listener if there is already one from a previous drawGates()
+    if(markers[i].listener) google.maps.event.removeListener(markers[i].listener);
+    markers[i].listener = google.maps.event.addListenerOnce(markers[i], 'rightclick', function(event) {
+      sitesViewModel.removeGate(site, gateKO);
     });
   });
 }
@@ -425,7 +453,7 @@ function geocode() {
 
 function tooltips(attr){
   var tooltips = $('#tooltips').is(':checked');
-  $('#controls a[rel = "tooltip"]').tooltip(attr ? attr : tooltips ? null : 'destroy');
+  $('#controls [rel = "tooltip"]').tooltip(attr ? attr : tooltips ? null : 'destroy');
 }
 
 function toggleLine() {

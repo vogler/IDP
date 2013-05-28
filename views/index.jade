@@ -119,13 +119,15 @@ html(lang="de")
             li 
               a.btn.btn-mini#btn_gate(rel="tooltip", title="Zwei mal auf Karte klicken um Linie zu erstellen"): i.icon-plus
               |  Gates
-      h3(data-bind="visible: site") Gates  
+      h3(data-bind="visible: site")
+        | Gates 
+        i.icon-info-sign(rel="tooltip", title="Klick auf Gate mit links de-/aktiviert es. Klick mit rechts löscht es.")
       #gates(data-bind="visible: site")
         // ko if: site
         div(data-bind="foreach: site().gates")
           a.btn.active(
             data-bind="text: markers[i()].title, attr: {i: i()}, css: {disabled: stats.intersectedGatesOrg().indexOf(i())==-1}"
-            onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); reloadStats(); drawGates(); }")
+            onclick="if(!$(this).hasClass('disabled')){ $(this).button('toggle'); drawGates(); reloadStats(); }")
         // /ko
       h3(data-bind="visible: loadedMap") Track
       div(data-bind="visible: loadedMap")
