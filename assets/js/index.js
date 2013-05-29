@@ -480,10 +480,10 @@ function toggleHeatmap() {
 }
 
 function downloadCSV(){
-  var excl = getExcludedGates();
+  var excludedGates = getExcludedGates();
   req = '/map/csv/'+loadedMap();
-  if(excl.length || excludedTimes.length)
-    req += '?' + $.param({excluded: JSON.stringify(excl), excludedTimes: JSON.stringify(excludedTimes)});
+  if(excludedGates.length || excludedTimes.length)
+    req += '?' + $.param({excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes)});
   console.log(req);
   location.href = req;
 }

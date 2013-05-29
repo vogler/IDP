@@ -228,14 +228,18 @@ app.get "/map/:format?/:file", (req, res) ->
       f b.from, (f b.to, a)
     , []
     map.meanDuration = Math.round(time/map.track.length)
+    map.excludedGates = excludedGates
+    map.excludedTimes = excludedTimes
     if req.params.format=='csv'
       # res.header('content-type','text/csv'); 
       # res.header('content-disposition', 'attachment; filename='+file+'.csv'); 
       res.attachment(file+'.csv') # sets content-type and -disposition
       header = [['Gates'].concat(map.stats.info.map (col) -> col.from+' zu '+col.to)]
       for row in header.concat(map.stats.table)
-        row = row.map (x) -> if x instanceof Array then JSON.stringify x.toString() else x
-        res.write row.join("; \t")+"\r\n"
+        row = row.map (x) -> if x instanceof Array then JSON.stringify x else x
+        res.write row.join("; \t")+"\r\n" # columns separated by semi-colons, rows by CRLF
+      res.write "\r\nausgeschlossene Gates:; \t"+JSON.stringify excludedGates
+      res.write "\r\nausgeschlossene Zeiten:; \t"+JSON.stringify excludedTimes
       res.end()
     else
       res.json map
