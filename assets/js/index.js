@@ -352,6 +352,13 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
           }
         }
       }
+      // for the current site, get the truck for this track (don't get it from server because local model of truck could be edited)
+      var truckInst = sitesViewModel.site().tracks().find(function(x){return x.file()==loadedMap()}).truck;
+      var truckType = trucksViewModel.trucks().find(function(x){return x._id()==truckInst._id()});
+      var truck = ko.toJS(truckType);
+      if(truck) truck.driver = truckInst.name();
+      // sitesViewModel.truck(truck);
+      ko.mapping.fromJS(truck, sitesViewModel.truck);
   });
 }
 

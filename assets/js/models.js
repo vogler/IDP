@@ -20,6 +20,8 @@ function SitesViewModel() {
     }
   });
   self.site = ko.observable();
+  var emptyCurrentTruck = {name: "", volume: "", speed: "", driver: ""};
+  self.truck = ko.mapping.fromJS(emptyCurrentTruck);
   self.newItem = ko.observable();
   self.uploading = ko.observable(false);
 
@@ -178,7 +180,7 @@ $(function() {
 
 function formatRowContent(data, index, row){
   if(!index && row == 'Zeiten') return data+'<br/><span class="muted">(Uhrzeit:<br/>Dauer)</span>';
-  if(!index || row == 'Anzahl') return data; // just return the row name or number
+  if(!index || row == 'Anzahl' || row == 'Menge') return data; // just return the row name or number
   if(data instanceof Array){ // Zeiten
     // var mean = stats.table()[2][index];
     var info = stats.info()[index-1]; // -1 because of row name

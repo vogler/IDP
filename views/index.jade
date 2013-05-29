@@ -142,10 +142,13 @@ html(lang="de")
         | Dauer: 
         small#time_duration
         br
-        a.btn.btn-small(onclick='geocode()')
-          i.icon-flag
-          |  reverse geocode
+        | LKW: 
+        small(data-bind="text: truck.name()+' ('+truck.driver()+')'")
         br
+        //- a.btn.btn-small(onclick='geocode()')
+        //-   i.icon-flag
+        //-   |  reverse geocode
+        //- br
         a.btn.btn-small(data-bind="attr: {href: '/map/'+loadedMap()}", rel="tooltip", title="Alle Daten als JSON anzeigen")
           i.icon-file
           | JSON
