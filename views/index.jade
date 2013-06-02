@@ -145,6 +145,14 @@ html(lang="de")
         | LKW: 
         small(data-bind="text: truck.name()+' ('+truck.driver()+')'")
         br
+        | Wetter: 
+        small
+          span#weather
+          br
+          a#wunderground wunderground
+          |  | 
+          a#wetterde wetter.de
+        br
         //- a.btn.btn-small(onclick='geocode()')
         //-   i.icon-flag
         //-   |  reverse geocode

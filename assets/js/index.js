@@ -337,6 +337,23 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       $('#time_end').text(Date.create(json.endTime*1000).format('{24hr}:{mm}'));
       $('#time_duration').text((json.endTime-json.startTime).seconds().duration('de'));
 
+      // weather info
+      var date = Date.create(json.startTime*1000);
+      var date_yyyymmdd = date.format('{yyyy}{MM}{dd}');
+      var loc = json.track.first();
+      var wunderground_url = 'http://api.wunderground.com/api/77f326bef53d2911/history_'+date_yyyymmdd+'/q/'+loc.lat+','+loc.lng+'.json';
+      $('#wunderground').attr('href', wunderground_url);
+      var wetterde_url = 'http://www.wetter.de/wetterarchiv/wetterbericht/'+date.format('{yyyy}-{MM}-{dd}');
+      $('#wetterde').attr('href', wetterde_url);
+      // display data from wunderground (?callback=? is added to make a JSONP request in order to avoid CORS issues)
+      // glossary: http://www.wunderground.com/weather/api/d/docs?d=resources/phrase-glossary&MR=1
+      $.getJSON(wunderground_url+'?callback=?', {}, function(x){
+        var summary = x.history.dailysummary[0];
+        var temp =summary.meantempm+'°C';
+        var rain = summary.rain=='1' ? ' Regen' : ' kein Regen';
+        $('#weather').text(temp+rain);
+      });
+
       // heatmap
       if(heatmap.getMap())
         heatmap.setData(path.getPath()); // OPT: not necessary if heatmap is deactivated
