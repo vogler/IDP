@@ -75,7 +75,7 @@ $(function() {
   //   $(this).parents('form').submit();
   // });
   // bootstrap-filestyle
-  $(":file").fileupload({
+  $(':file').fileupload({
     dataType: 'json', // response
     add: function (e, data) {
       // console.log(data);
@@ -173,13 +173,13 @@ $(function() {
   });
 
   // speed slider
-  $( "#speed_slider" ).slider({
+  $('#speed_slider').slider({
     range: "min",
     min: 1,
     max: 100,
     value: anim.speed,
     slide: function( event, ui ) {
-      $( "#speed" ).text( ui.value );
+      $('#speed').text( ui.value );
       anim.speed = ui.value;
       if(anim.playing){
         anim_pause();
@@ -187,7 +187,7 @@ $(function() {
       }
     }
   });
-  $( "#speed" ).text(anim.speed);
+  $('#speed').text(anim.speed);
 
   // colorpicker
   $('#colorSelector').minicolors({
@@ -198,7 +198,7 @@ $(function() {
   });
 
   // stroke spinner
-  $( "#stroke_spinner" ).val(strokeWeight).spinner({
+  $('#stroke_spinner').val(strokeWeight).spinner({
     min: 0, max: 20, step: 0.1,
     numberFormat: 'n',
     spin: function( event, ui ) {
@@ -396,7 +396,7 @@ var anim = {
     })
 };
 function anim_updateTime(){
-  $("#anim_time").text(duration(track[anim.i].time));
+  $('#anim_time').text(duration(track[anim.i].time));
 }
 function anim_play(){
   if(!anim.playing) {
@@ -406,8 +406,8 @@ function anim_play(){
       anim_step();
     }
     // animation timeline
-    $("#anim_timeline").slideDown();
-    $("#anim_slider").slider({
+    $('#anim_timeline').slideDown();
+    $('#anim_slider').slider({
       range: "min",
       min: 1,
       max: anim.fullPath.length,
@@ -432,7 +432,7 @@ function anim_step(){
   path.setPath(anim.fullPath.first(anim.i));
   if(anim.follow) map.setCenter(anim.fullPath[anim.i]);
   anim.curPosMarker.setCenter(anim.fullPath[anim.i-1]);
-  $("#anim_slider").slider({ value: anim.i });
+  $('#anim_slider').slider({ value: anim.i });
   anim_updateTime();
   anim.i++;
 }
@@ -446,8 +446,8 @@ function anim_stop(){
   if(anim.fullPath) path.setPath(anim.fullPath);
   // remove current position marker
   anim.curPosMarker.setMap(null);
-  $( "#btn_play i" ).attr('class', 'icon-play');
-  $("#anim_timeline").slideUp();
+  $('#btn_play i').attr('class', 'icon-play');
+  $('#anim_timeline').slideUp();
 }
 
 // geocode
