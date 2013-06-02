@@ -117,7 +117,7 @@ $(function() {
         // i: gates().length.toString() is not a good idea because e.g. delete B from A,B,C then add new gate -> fail: has same i as C
         // get first free i from server
         $.getJSON('/db/sites/'+sitesViewModel.site()._id(), {}, function(json){
-          var is = json.gates.map(function(gate){return gate.i});
+          var is = json.gates ? json.gates.map(function(gate){return gate.i}) : [];
           for(var i in (0).upto(25)){
             if(is.indexOf(i)==-1){
               // console.log("found free i for gate:", i);
