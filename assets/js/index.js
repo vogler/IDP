@@ -351,7 +351,10 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
         var summary = x.history.dailysummary[0];
         var temp =summary.meantempm+'°C';
         var rain = summary.rain=='1' ? ' Regen' : ' kein Regen';
-        $('#weather').text(temp+rain);
+        // most often appearing condition
+        var conds = x.history.observations.map(function(x){return x.conds});
+        var cond = ' ('+conds.most()+')'; // sugarjs
+        $('#weather').text(temp+rain+cond);
       });
 
       // heatmap
