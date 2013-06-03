@@ -312,6 +312,7 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       ko.mapping.fromJS(json.stats, stats);
       if(!excludedGates.length)
         stats.intersectedGatesOrg(stats.intersectedGates());
+      boxPlot(); // append box plots at end of body
       if(onlyStats) return; // don't redraw everything (e.g. only added gate or excluded gate or time)
 
       // track
