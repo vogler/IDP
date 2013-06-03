@@ -145,6 +145,14 @@ app.get "/maps", (req, res) ->
   fs.readdir paths.json, (err, files) ->
     res.json files
 
+getMedian = (values) ->
+  values.sort  (a,b) -> a-b
+  half = Math.floor values.length/2
+  if values.length % 2 
+    values[half]
+  else
+    (values[half-1] + values[half]) / 2.0
+
 app.get "/map/:format?/:file", (req, res) ->
   # handle request and pass data to analyze
   excludedGates = if req.query.excludedGates then JSON.parse(req.query.excludedGates) else []
@@ -210,14 +218,16 @@ app.get "/map/:format?/:file", (req, res) ->
         n = diffs.length
         # v2times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
         sum = diffs.reduce ((a,b) -> a+b), 0
+        median = getMedian diffs
         mean = sum/n
         ssd = if n<2 then 0 else diffs.reduce (a,b) -> a + Math.pow(b-mean, 2)
         stdev = Math.sqrt(1/(n-1)*ssd)
-        map.stats.info.push from: g1, to: g2, times: v2.times, n: n, sum: sum, mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
+        map.stats.info.push from: g1, to: g2, times: v2.times, n: n, sum: sum, median: Math.round(median), mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
     # map.gates = gates
     # need to gather data in rows for Knockout-template :(
     map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.n+'/'+x.times.length),
                  ['Summe'].concat(map.stats.info.map (x) -> x.sum),
+                 ['Median'].concat(map.stats.info.map (x) -> x.median),
                  ['Mittel'].concat(map.stats.info.map (x) -> x.mean),
                  ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),
                  ['Menge'].concat(map.stats.info.map (x) -> x.n*truck?.volume),
