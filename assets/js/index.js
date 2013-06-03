@@ -257,6 +257,7 @@ function drawGates(){
       sitesViewModel.removeGate(site, gateKO);
     });
   });
+  $("#markerToggle").addClass("active"); // if markers were deactivated, they are activated now...
 }
 
 function changedSite(){

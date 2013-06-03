@@ -189,7 +189,7 @@ html(lang="de")
         //- input(type="number", min="0", max="10", step=".1", value="1")
         .btn-group
           a.btn.active(onclick='toggleLine()', data-toggle="button") Linie
-          a.btn.active(onclick='toggleMarkers()', data-toggle="button") Marker
+          a.btn.active#markerToggle(onclick='toggleMarkers()', data-toggle="button") Marker
           a.btn(onclick='toggleHeatmap()', data-toggle="button") Heatmap
         div
           label.checkbox.pull-left
