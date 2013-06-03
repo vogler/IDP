@@ -7,44 +7,39 @@ var chart = d3.box()
     .width(width)
     .height(height);
 
+plotRow = undefined;
 function boxPlot() {
   var data = [];
   var min = Infinity,
       max = -Infinity;
 
-  // var row = d3.select("#infoTable tbody").append("tr");
+  if(plotRow) plotRow.remove();
+  plotRow = d3.select("#infoTable tbody").append("tr");
+  plotRow.append("td").text("Box Plot");
   stats.info().forEach(function(x) {
-    var durations = x.times().map(function(x){return x[1]}); // x[0] is the time, x[1] the duration
+    var durations = filterMap(x.times(), function(x){return timeExcluded(x[0]) ? undefined : x[1]}); // x[0] is the time, x[1] the duration
     data.push(durations);
     // if (d > max) max = d;
     // if (d < min) min = d;
     min = x.min();
     max = x.max();
 
-    console.log(data, min, max);
-
+    // console.log(data, min, max);
     chart.domain([min, max]);
 
-    // // var svg = d3.select("#infoTable tbody tr:last-child").selectAll("td svg")
-    // var svg = row.selectAll("td svg")
-    //     .data(data)
-    //   // .enter().insert("svg", ":first-child") // equals prepend
-    //   .enter().append("td").append("svg")
-    //     .attr("class", "box")
-    //     .attr("width", width + margin.left + margin.right)
-    //     .attr("height", height + margin.bottom + margin.top)
-    //   .append("g")
-    //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    //     .call(chart);
-    var svg = d3.select("body").selectAll("svg")
-        .data(data)
-      .enter().append("svg")
+    // update
+    var td = plotRow.selectAll("td svg")
+        .data(data);
+    // enter
+    td.enter().append("td").append("svg")
         .attr("class", "box")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.bottom + margin.top)
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .call(chart);
+    // exit
+    td.exit().remove();
   });
 }
 

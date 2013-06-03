@@ -210,11 +210,11 @@ html(lang="de")
         tr
           th Gates
           // ko foreach: stats.info 
-          th(style="white-space: nowrap", data-bind="text: markers[from()].title+' zu '+markers[to()].title")
+          th(style="white-space: nowrap; text-align: center", data-bind="text: markers[from()].title+' zu '+markers[to()].title")
           // /ko 
       tbody(data-bind="foreach: {data: stats.table, as: 'row'}")
         tr(data-bind="foreach: row")
-          td(style="white-space: nowrap", data-bind="html: formatRowContent($data, $index(), row[0])")
+          td(style="white-space: nowrap; text-align: center", data-bind="html: formatRowContent($data, $index(), row[0])")
 
     #files.pull-right(data-bind="if: site")
       span(data-bind="visible: !site() || site().tracks().length==0") Es sind noch keine Karten vorhanden

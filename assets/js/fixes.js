@@ -51,3 +51,13 @@ function duration(seconds){
   var seconds = seconds || 0
   return (hours >= 1 ? hours+':' : '') + Date.create(seconds.seconds()).format('{mm}:{ss}');
 }
+
+// functional
+// >10x faster than map+filter (see http://jsperf.com/map-filter-vs-filtermap)
+function filterMap(r, f) {
+  var n = [ ];
+  for (var i = 0, L = r.length, v; i < L; i++)
+    if ((v = f(r[i])) !== undefined)
+      n.push(v);
+  return n;
+}
