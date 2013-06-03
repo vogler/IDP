@@ -42,6 +42,8 @@ function SitesViewModel() {
     var name = this.newItem();
     $.post(url, {name: name}, function(item){
       item.editing = false;
+      item.tracks = [];
+      item.gates = [];
       self.sites.push(ko.mapping.fromJS(item));
       self.newItem("");
       console.log("added", item._id);
@@ -152,9 +154,23 @@ function SitesViewModel() {
   self.upload = function(){
     if(self.uploading()) return;
     self.uploading(true);
-    ko.utils.arrayForEach(uploads(), function(item){
-      if(!item.truck) return alert("Wählen Sie einen LKW für "+item.file);
+    // var tracks = flatMap(self.sites(), function(site){return "tracks" in site ? site.tracks().map(function(track){return track.file()}) : []});
+    var tracks = {};
+    self.sites().forEach(function(site){
+      site.tracks().forEach(function(track){
+        tracks[track.file()] = site.name();
+      });
     });
+    var error = undefined;
+    ko.utils.arrayForEach(uploads(), function(item){
+      if(!item.truck) error = "Wählen Sie einen LKW für "+item.file;
+      var key = item.file+".gpx";
+      if(key in tracks) error = "Die Datei \""+item.file+"\" ist bereits der Baustelle \""+tracks[key]+"\" zugeordnet!\nEntfernen Sie sie in der Baustellenverwaltung oder benennen Sie die Datei um.";
+    });
+    if(error){
+      self.uploading(false);
+      return alert(error);
+    }
     // console.log(uploads());
     ko.utils.arrayForEach(uploads(), function(item){
       item.data.formData = {site: sitesViewModel.site()._id(), truck: JSON.stringify(item.truck)};

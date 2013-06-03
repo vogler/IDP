@@ -54,10 +54,14 @@ function duration(seconds){
 
 // functional
 // >10x faster than map+filter (see http://jsperf.com/map-filter-vs-filtermap)
-function filterMap(r, f) {
+function filterMap(r, f){
   var n = [ ];
   for (var i = 0, L = r.length, v; i < L; i++)
     if ((v = f(r[i])) !== undefined)
       n.push(v);
   return n;
+}
+// flatMap
+function flatMap(xs, f){
+  return [].concat.apply([], xs.map(f));
 }
