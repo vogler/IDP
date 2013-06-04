@@ -347,9 +347,9 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       $('#wunderground').attr('href', wunderground_url);
       var wetterde_url = 'http://www.wetter.de/wetterarchiv/wetterbericht/'+date.format('{yyyy}-{MM}-{dd}');
       $('#wetterde').attr('href', wetterde_url);
-      // display data from wunderground (?callback=? is added to make a JSONP request in order to avoid CORS issues)
+      // display data from wunderground
       // glossary: http://www.wunderground.com/weather/api/d/docs?d=resources/phrase-glossary&MR=1
-      $.getJSON(wunderground_url+'?callback=?', {}, function(x){
+      var updateWeather = function(x){
         var summary = x.history.dailysummary[0];
         var temp =summary.meantempm+'°C';
         var rain = summary.rain=='1' ? ' Regen' : ' kein Regen';
@@ -357,6 +357,22 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
         var conds = x.history.observations.map(function(x){return x.conds});
         var cond = ' ('+conds.most()+')'; // sugarjs
         $('#weather').text(temp+rain+cond);
+      };
+      // use DB as a proxy to avoid API limit (e.g. 10 requests/min for wunderground)
+      var req = {date: date_yyyymmdd, lat: loc.lat, lng: loc.lng};
+      $.getJSON('/db/weather/', {query: JSON.stringify(req)}, function(xs){
+        if(xs.length<1){ // nothing in DB yet
+          // ?callback=? is added to make a JSONP request in order to avoid CORS issues
+          $.getJSON(wunderground_url+'?callback=?', {}, function(x){
+            console.log('Weather not yet cached. Loaded from wunderground.com');
+            req.data = x;
+            // save in DB
+            $.post('/db/weather/', req, function(data){});
+            updateWeather(x);
+          });
+        }else{
+          updateWeather(xs[0].data); // take result from DB
+        }
       });
 
       // heatmap
