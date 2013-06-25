@@ -108,7 +108,7 @@ html(lang="de")
                   optgroup(data-bind="attr: {label: name}, foreach: list")
                     option(data-bind="text: name, value: {_id: $parent._id(), name: name()}")
         h5(data-bind="ifnot: trucksViewModel.trucks().length") Es müssen erst LKWs angelegt werden bevor die Dateien hochgeladen werden können!
-        h5 Über "Karten hochladen" können weitere Dateien hinzugefügt werden.
+        h5 Über "GPS-Daten hochladen" können weitere Dateien hinzugefügt werden.
         a.btn.btn-danger(data-bind="visible: uploads().length && !uploading()", onclick="uploads([]); $('#uploads').modal('hide')") Uploads verwerfen
         input.btn.btn-primary.pull-right(data-bind="visible: trucksViewModel.trucks().length>0 && uploads().length, css: {disabled: uploading}, click: upload", value='hochladen')
 
@@ -121,7 +121,7 @@ html(lang="de")
         div(data-bind="visible: site")
           span.btn.fileinput-button
             i.icon-folder-open
-            |  Karten hochladen
+            |  GPS-Daten hochladen
             input(type='file', name='map', data-url="/upload", multiple)
           ul.unstyled.inline
             li 
@@ -221,7 +221,7 @@ html(lang="de")
           td(style="white-space: nowrap; text-align: center", data-bind="html: formatRowContent($data, $index(), row[0])")
 
     #files.pull-right(data-bind="if: site")
-      span(data-bind="visible: !site() || site().tracks().length==0") Es sind noch keine Karten vorhanden
+      span(data-bind="visible: !site() || site().tracks().length==0") Es sind noch keine GPS-Daten vorhanden
       ul.unstyled(data-bind="foreach: {data: site().tracks, afterAdd: fadeIn}")
         li
           label.checkbox.inline

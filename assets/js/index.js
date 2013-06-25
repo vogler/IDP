@@ -440,7 +440,7 @@ function anim_play(){
     });
     // current position marker
     anim.curPosMarker.setMap(map);
-    anim.playing = setInterval('anim_step()', parseInt(5000/anim.speed)); // TODO not all tracks have 5s steps
+    anim.playing = setInterval('anim_step()', parseInt(5000/anim.speed)); // TODO: not all tracks have 5s steps
   } else {
     anim_pause();
   }

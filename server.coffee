@@ -178,12 +178,12 @@ app.get "/map/:format?/:file", (req, res) ->
     map.site = site._id
     map.intersections = []
     time = 0
-    map.track.reduce (a, b, i, arr) -> # TODO parallel, perpendicular lines?
+    map.track.reduce (a, b, i, arr) -> # TODO: parallel, perpendicular lines?
       # m1 = (b.lat-a.lat) / (b.lng-a.lng)
       # t1 = a.lat - m1*a.lng
       duration = b.time - a.time
       time += duration
-      for gate in gates # TODO optimization: check bounds to skip calculations?
+      for gate in gates # TODO: optimization: check bounds to skip calculations?
         # gate.i = parseInt(gate.i)
         if gate.i in excludedGates
           continue
