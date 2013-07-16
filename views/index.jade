@@ -36,7 +36,7 @@ html(lang="de")
         b.caret
       ul.dropdown-menu
         li: a(onclick="$('#controls').toggle()") Seitenleiste
-        li: a(onclick="$('#infoTable').toggle()") Tabellen
+        li: a(onclick="$('#infoTable').toggle()") Auswertung
         li: a(onclick="$('#files').toggle()") Dateiliste
 
     #sites.modal.fade.hide
@@ -129,7 +129,7 @@ html(lang="de")
               |  Gates
       h3(data-bind="visible: site")
         | Gates 
-        i.icon-info-sign(rel="tooltip", title="Klick auf Gate mit links de-/aktiviert es. Klick mit rechts löscht es.")
+        i.icon-info-sign(rel="tooltip", title="Linksklick auf Gate de-/aktiviert es, Rechtsklick auf Marker löscht es.")
       #gates(data-bind="visible: site")
         // ko if: site
         div(data-bind="foreach: site().gates")
