@@ -167,92 +167,93 @@ app.get "/map/:format?/:file", (req, res) ->
       res.send 404
       return
     map = JSON.parse data
+    map.excludedGates = excludedGates
+    map.excludedTimes = excludedTimes
     dbSites.findOne "tracks.file": file, (err, site) -> # get gates for site that has corresponding track.file -> no dups for filenames!
       truckInst = (site.tracks.filter (x) -> x.file==file)[0].truck
       dbTrucks.findById truckInst._id, (err, truckType) ->
         truckType?.driver = truckInst.name
-        analyze map, site, truckType
-  # calculate intersections, analyze and format output
-  analyze = (map, site, truck) ->
-    gates = site?.gates ? [] # maybe there are no gates yet
-    map.site = site._id
-    map.intersections = []
-    time = 0
-    map.track.reduce (a, b, i, arr) -> # TODO: parallel, perpendicular lines?
-      # m1 = (b.lat-a.lat) / (b.lng-a.lng)
-      # t1 = a.lat - m1*a.lng
-      duration = b.time - a.time
-      time += duration
-      for gate in gates # TODO: optimization: check bounds to skip calculations?
-        # gate.i = parseInt(gate.i)
-        if gate.i in excludedGates
-          continue
-        gate.path.reduce (c, d, i, arr) ->
-          # m2 = (d.lat-c.lat) / (d.lng-c.lng)
-          # t2 = c.lat - m2*c.lng
-          N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
-          s = ((c.lng-a.lng) * (d.lat-c.lat) - (c.lat-a.lat) * (d.lng-c.lng)) / N
-          t = (a.lng-c.lng + s*(b.lng-a.lng)) / (d.lng-c.lng)
-          # check if the intersection is on the line segment
-          if 0 <= s <= 1 and 0 <= t <= 1
-            point =
-              lng: a.lng + s*(b.lng-a.lng)
-              lat: a.lat + s*(b.lat-a.lat)
-            # console.log 'intersection at', point
-            # console.log 'intersection at', time, 's for', duration, 's'
-            map.intersections.push time: time, gate: gate.i # chronological
-          d
+        analyze map, site, truckType, req, res
+
+# calculate intersections, analyze and format output
+analyze = (map, site, truck, req, res) ->
+  gates = site?.gates ? [] # maybe there are no gates yet
+  map.site = site._id
+  map.intersections = []
+  time = 0
+  map.track.reduce (a, b, i, arr) -> # TODO: parallel, perpendicular lines?
+    # m1 = (b.lat-a.lat) / (b.lng-a.lng)
+    # t1 = a.lat - m1*a.lng
+    duration = b.time - a.time
+    time += duration
+    for gate in gates # TODO: optimization: check bounds to skip calculations?
+      # gate.i = parseInt(gate.i)
+      if gate.i in map.excludedGates
+        continue
+      gate.path.reduce (c, d, i, arr) ->
+        # m2 = (d.lat-c.lat) / (d.lng-c.lng)
+        # t2 = c.lat - m2*c.lng
+        N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
+        s = ((c.lng-a.lng) * (d.lat-c.lat) - (c.lat-a.lat) * (d.lng-c.lng)) / N
+        t = (a.lng-c.lng + s*(b.lng-a.lng)) / (d.lng-c.lng)
+        # check if the intersection is on the line segment
+        if 0 <= s <= 1 and 0 <= t <= 1
+          point =
+            lng: a.lng + s*(b.lng-a.lng)
+            lat: a.lat + s*(b.lat-a.lat)
+          # console.log 'intersection at', point
+          # console.log 'intersection at', time, 's for', duration, 's'
+          map.intersections.push time: time, gate: gate.i # chronological
+        d
+    b
+  # aggregate stats
+  stats = {}
+  if map.intersections.length>1
+    map.intersections.reduce (a, b) ->
+      stats[a.gate] ?= {}
+      stats[a.gate][b.gate] ?= times: []
+      stats[a.gate][b.gate].times.push [map.startTime+a.time, b.time-a.time]
       b
-    # aggregate stats
-    stats = {}
-    if map.intersections.length>1
-      map.intersections.reduce (a, b) ->
-        stats[a.gate] ?= {}
-        stats[a.gate][b.gate] ?= times: []
-        stats[a.gate][b.gate].times.push [map.startTime+a.time, b.time-a.time]
-        b
-    map.stats = info: [], table: []
-    for g1,v1 of stats
-      for g2,v2 of v1
-        diffs = (v2.times.filter ([a, diff]) -> a not in excludedTimes).map ([a, diff]) -> diff # filter_map: don't take excluded times into account
-        n = diffs.length
-        # v2times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
-        sum = diffs.reduce ((a,b) -> a+b), 0
-        median = getMedian diffs
-        mean = sum/n
-        ssd = if n<2 then 0 else diffs.reduce (a,b) -> a + Math.pow(b-mean, 2)
-        stdev = Math.sqrt(1/(n-1)*ssd)
-        map.stats.info.push from: g1, to: g2, times: v2.times, n: n, sum: sum, median: Math.round(median), mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
-    # map.gates = gates
-    # need to gather data in rows for Knockout-template :(
-    map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.n+'/'+x.times.length),
-                 ['Summe'].concat(map.stats.info.map (x) -> x.sum),
-                 ['Median'].concat(map.stats.info.map (x) -> x.median),
-                 ['Mittel'].concat(map.stats.info.map (x) -> x.mean),
-                 ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),
-                 ['Menge'].concat(map.stats.info.map (x) -> x.n*truck?.volume),
-                 ['Zeiten'].concat(map.stats.info.map (x) -> x.times),]
-    map.stats.allGates = gates.map (x) -> x.i
-    map.stats.intersectedGates = map.stats.info.reduce (a,b) ->
-      f = (x,y) -> if x in y then y else y.concat(x) # unique append
-      f b.from, (f b.to, a)
-    , []
-    map.meanDuration = Math.round(time/map.track.length)
-    map.excludedGates = excludedGates
-    map.excludedTimes = excludedTimes
-    if req.params.format=='csv'
-      # res.header('content-type','text/csv'); 
-      # res.header('content-disposition', 'attachment; filename='+file+'.csv'); 
-      res.attachment(file+'.csv') # sets content-type and -disposition
-      header = [['Gates'].concat(map.stats.info.map (col) -> col.from+' zu '+col.to)]
-      for row in header.concat(map.stats.table)
-        row = row.map (x) -> if x instanceof Array then JSON.stringify x else x
-        res.write row.join("; \t")+"\r\n" # columns separated by semi-colons, rows by CRLF
-      res.write "\r\nausgeschlossene Gates:; \t"+JSON.stringify excludedGates
-      res.write "\r\nausgeschlossene Zeiten:; \t"+JSON.stringify excludedTimes
-      res.end()
-    else
-      res.json map
+  map.stats = info: [], table: []
+  for g1,v1 of stats
+    for g2,v2 of v1
+      diffs = (v2.times.filter ([a, diff]) -> a not in map.excludedTimes).map ([a, diff]) -> diff # filter_map: don't take excluded times into account
+      n = diffs.length
+      # v2times.sort (a,b) -> a-b # standard sort compares strings -> 10 before 2
+      sum = diffs.reduce ((a,b) -> a+b), 0
+      median = getMedian diffs
+      mean = sum/n
+      ssd = if n<2 then 0 else diffs.reduce (a,b) -> a + Math.pow(b-mean, 2)
+      stdev = Math.sqrt(1/(n-1)*ssd)
+      map.stats.info.push from: g1, to: g2, times: v2.times, n: n, sum: sum, median: Math.round(median), mean: Math.round(mean), stdev: Math.round(stdev), max: Math.max.apply(null, diffs), min: Math.min.apply(null, diffs)
+  # map.gates = gates
+  # need to gather data in rows for Knockout-template :(
+  map.stats.table = [['Anzahl'].concat(map.stats.info.map (x) -> x.n+'/'+x.times.length),
+               ['Summe'].concat(map.stats.info.map (x) -> x.sum),
+               ['Median'].concat(map.stats.info.map (x) -> x.median),
+               ['Mittel'].concat(map.stats.info.map (x) -> x.mean),
+               ['Sigma'].concat(map.stats.info.map (x) -> x.stdev),
+               ['Menge'].concat(map.stats.info.map (x) -> x.n*truck?.volume),
+               ['Zeiten'].concat(map.stats.info.map (x) -> x.times),]
+  map.stats.allGates = gates.map (x) -> x.i
+  map.stats.intersectedGates = map.stats.info.reduce (a,b) ->
+    f = (x,y) -> if x in y then y else y.concat(x) # unique append
+    f b.from, (f b.to, a)
+  , []
+  map.meanDuration = Math.round(time/map.track.length)
+  if req.params.format=='csv'
+    # res.header('content-type','text/csv'); 
+    # res.header('content-disposition', 'attachment; filename='+file+'.csv'); 
+    res.attachment(file+'.csv') # sets content-type and -disposition
+    header = [['Gates'].concat(map.stats.info.map (col) -> col.from+' zu '+col.to)]
+    for row in header.concat(map.stats.table)
+      row = row.map (x) -> if x instanceof Array then JSON.stringify x else x
+      res.write row.join("; \t")+"\r\n" # columns separated by semi-colons, rows by CRLF
+    res.write "\r\nausgeschlossene Gates:; \t"+JSON.stringify map.excludedGates
+    res.write "\r\nausgeschlossene Zeiten:; \t"+JSON.stringify map.excludedTimes
+    res.end()
+  else
+    res.json map
 
 app.del "/map/:file?", (req, res) ->
   tracks = if req.params.file then [file: req.params.file] else req.body?.tracks ? []
