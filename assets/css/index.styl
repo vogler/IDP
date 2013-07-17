@@ -1,18 +1,22 @@
 html, body
-  height 100%
+  height 100% // needed for scaling google maps
 
 [onclick]
-  cursor pointer
+  cursor pointer  // use hand cursor for everything clickable
 
 #layoutMenu
   position absolute
   z-index 1
 
+// variables
+controlsWidth = 250px
+mapHeight = 80%
+
 #map_canvas
-  height 80%
+  height mapHeight
 
 #controls
-  width 250px
+  width controlsWidth
 #controls > h3
   padding .3em .7em
 #controls > div
@@ -40,3 +44,15 @@ html, body
 #anim_slider_container
   margin-left 3em // offset for label
   padding 3px 10px // some space for handle
+
+moveVert(n) // mixin for moving things relatively
+  top n
+  margin-bottom n // otherwise it still leaves an empty space at the original position
+
+#map_resize
+  position relative
+  top -1.6em
+  a
+    position absolute
+    right controlsWidth
+    cursor s-resize

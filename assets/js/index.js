@@ -207,6 +207,16 @@ $(function() {
   });
 
   tooltips();
+
+  // resize map
+  $('#map_resize').mousedown(function(ev){
+    ev.preventDefault(); // avoids selecting text while dragging
+    $('body').mousemove(function(ev){
+      $('#map_canvas').css('height', ev.pageY);
+    }).mouseup(function(){
+      $('body').off('mousemove');
+    });
+  });
 });
 
 
