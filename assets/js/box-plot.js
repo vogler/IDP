@@ -14,8 +14,12 @@ function boxPlot() {
       max = -Infinity;
 
   if(plotRow) plotRow.remove();
+  // plotRow = d3.select("#infoTable tbody").insert("tr", ":last-child"); // insert before. works with tr but not tbody... d3 bug?
   plotRow = d3.select("#infoTable tbody").append("tr");
-  plotRow.append("td").text("Box Plot");
+  // hack: move the last row up with jQuery...
+  var tr = $("#infoTable tr:last");
+  tr.prev().before(tr);
+  plotRow.append("td").text("Box Plot").style("text-align", "center");
   stats.info().forEach(function(x) {
     var durations = filterMap(x.times(), function(x){return timeExcluded(x[0]) ? undefined : x[1]}); // x[0] is the time, x[1] the duration
     data.push(durations);
@@ -31,7 +35,7 @@ function boxPlot() {
     var td = plotRow.selectAll("td svg")
         .data(data);
     // enter
-    td.enter().append("td").append("svg")
+    td.enter().append("td").style("text-align", "center").append("svg")
         .attr("class", "box")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.bottom + margin.top)
