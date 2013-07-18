@@ -227,8 +227,10 @@ html(lang="de")
       span(data-bind="visible: !site() || site().tracks().length==0") Es sind noch keine GPS-Daten vorhanden
       ul.nav.nav-list(data-bind="foreach: {data: site().tracks, afterAdd: fadeIn}")
         li.checkbox(data-bind="css: {active: file()==loadedMap()}")
-          input(type="checkbox", data-bind="attr: {checked: file()==loadedMap(), disabled: file()==loadedMap()}")
+          input(type="checkbox", data-bind="checked: file()==loadedMap(), attr: {disabled: file()==loadedMap()}, click: reloadStats")
           a(data-bind="text: file, attr: {href: '#map/'+file()}")
+      a#selectAllFiles.btn.btn-mini(onclick="$('#files input').prop('checked', true); reloadStats();")
+        i.icon-ok
 
 
     if node_env=="development"

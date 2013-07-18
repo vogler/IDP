@@ -173,7 +173,9 @@ app.get "/map/:format?/:file", (req, res) ->
     # combine multiple tracks if there is more than one file
     if files.length > 1
       maps = files.map (file) -> JSON.parse(fs.readFileSync(paths.json + file)) # parse all maps TODO better to do it async...
-      map.track = maps.reduce (a, b) -> a.track.concat b.track # and combine all tracks
+      console.log "loaded and parsed files:", maps.length, files
+      tracks = maps.map (x) -> x.track
+      map.track = tracks.reduce (a, b) -> a.concat b # and combine all tracks
     dbSites.findOne "tracks.file": file, (err, site) -> # get gates for site that has corresponding track.file -> no dups for filenames!
       truckInst = (site.tracks.filter (x) -> x.file==file)[0].truck
       dbTrucks.findById truckInst._id, (err, truckType) ->

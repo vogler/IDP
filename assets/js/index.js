@@ -310,15 +310,17 @@ function toggleExcludeTime(time){
 function reloadStats(){
   console.log("reloadStats");
   loadMap(false, true);
+  return true; // for reloadStats on checkbox click
 }
 
-loadedMaps = [];
 function loadMap(file, onlyStats){ // reloads if file is undefined
   if(!file) file = loadedMap();
   else loadedMap(file);
   if(!file) return;
   anim_stop();
   var excludedGates = getExcludedGates();
+  var loadedMaps = $.map($('#files input:checked+a'), function(x){ return $(x).text() }); // all checked files
+  console.log('loadedMaps:', loadedMaps);
   $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes), files: JSON.stringify(loadedMaps)}, function(json){
       // stats
       ko.mapping.fromJS(json.stats, stats);
