@@ -211,10 +211,10 @@ $(function() {
   // resize map
   $('#map_resize').mousedown(function(ev){
     ev.preventDefault(); // avoids selecting text while dragging
-    $('body').mousemove(function(ev){
+    $('body').css('cursor', 's-resize').mousemove(function(ev){
       $('#map_canvas').css('height', ev.pageY);
     }).mouseup(function(){
-      $('body').off('mousemove');
+      $('body').css('cursor', 'default').off('mousemove');
     });
   });
 });
