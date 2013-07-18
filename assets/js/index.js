@@ -319,9 +319,9 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
   if(!file) return;
   anim_stop();
   var excludedGates = getExcludedGates();
-  var loadedMaps = $.map($('#files input:checked+a'), function(x){ return $(x).text() }); // all checked files
-  console.log('loadedMaps:', loadedMaps);
-  $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes), files: JSON.stringify(loadedMaps)}, function(json){
+  var extraFiles = $.map($('#files input:checked:enabled+a'), function(x){ return $(x).text() }); // other checked files
+  console.log('extraFiles:', extraFiles);
+  $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes), extraFiles: JSON.stringify(extraFiles)}, function(json){
       // stats
       ko.mapping.fromJS(json.stats, stats);
       if(!excludedGates.length)

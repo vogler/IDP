@@ -157,7 +157,7 @@ app.get "/map/:format?/:file", (req, res) ->
   # handle request and pass data to analyze
   excludedGates = if req.query.excludedGates then JSON.parse(req.query.excludedGates) else []
   excludedTimes = if req.query.excludedTimes then JSON.parse(req.query.excludedTimes) else []
-  files         = if req.query.files         then JSON.parse(req.query.files)         else [] # combine files for analyze
+  extraFiles    = if req.query.extraFiles    then JSON.parse(req.query.extraFiles)    else [] # append tracks of these files for analyze
   file = req.params.file
   console.log file, req.params.format, excludedGates, excludedTimes
   pathJson = paths.json + file
@@ -171,38 +171,16 @@ app.get "/map/:format?/:file", (req, res) ->
     map.excludedGates = excludedGates
     map.excludedTimes = excludedTimes
     # combine multiple tracks if there is more than one file
-    if files.length > 1
-      maps = files.map (file) -> JSON.parse(fs.readFileSync(paths.json + file)) # parse all maps TODO better to do it async...
-      console.log "loaded and parsed files:", maps.length, files
+    if extraFiles.length > 0
+      maps = extraFiles.map (file) -> JSON.parse(fs.readFileSync(paths.json + file)) # parse all maps TODO better to do it async...
+      console.log "loaded and parsed extra files:", maps.length, extraFiles
       tracks = maps.map (x) -> x.track
-      map.track = tracks.reduce (a, b) -> a.concat b # and combine all tracks
+      map.track = map.track.concat tracks.reduce (a, b) -> a.concat b # and combine all tracks
     dbSites.findOne "tracks.file": file, (err, site) -> # get gates for site that has corresponding track.file -> no dups for filenames!
       truckInst = (site.tracks.filter (x) -> x.file==file)[0].truck
       dbTrucks.findById truckInst._id, (err, truckType) ->
         truckType?.driver = truckInst.name
         analyze map, site, truckType, req, res
-
-# app.post "/map", (req, res) ->
-#   # same as above, but execute analyze with combined tracks from multiple files
-#   # handle request and pass data to analyze
-#   excludedGates = if req.query.excludedGates then JSON.parse(req.query.excludedGates) else []
-#   excludedTimes = if req.query.excludedTimes then JSON.parse(req.query.excludedTimes) else []
-#   files = req.body.files
-#   console.log files
-#   if files.length<1 or typeof files != "object"
-#     res.send 404
-#     return
-#   # read and parse all requested files
-#   maps = files.map (file) -> JSON.parse(fs.readFileSync(paths.json + file)) # TODO better to do it async...
-#   map = maps[0] # just take the first one
-#   map.track = maps.reduce (a, b) -> a.track.concat b.track # and add all other tracks
-#   map.excludedGates = excludedGates
-#   map.excludedTimes = excludedTimes
-#   dbSites.findOne "tracks.file": files[0], (err, site) -> # get gates for site that has corresponding track.file -> no dups for filenames!
-#     truckInst = (site.tracks.filter (x) -> x.file==file)[0].truck
-#     dbTrucks.findById truckInst._id, (err, truckType) ->
-#       truckType?.driver = truckInst.name
-#       analyze map, site, truckType
 
 # calculate intersections, analyze and format output
 analyze = (map, site, truck, req, res) ->
