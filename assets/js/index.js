@@ -312,13 +312,14 @@ function reloadStats(){
   loadMap(false, true);
 }
 
+loadedMaps = [];
 function loadMap(file, onlyStats){ // reloads if file is undefined
   if(!file) file = loadedMap();
   else loadedMap(file);
   if(!file) return;
   anim_stop();
   var excludedGates = getExcludedGates();
-  $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes)}, function(json){
+  $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes), files: JSON.stringify(loadedMaps)}, function(json){
       // stats
       ko.mapping.fromJS(json.stats, stats);
       if(!excludedGates.length)
