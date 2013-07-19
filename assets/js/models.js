@@ -110,11 +110,24 @@ function SitesViewModel() {
     var emptyTruck = {name: "", truckType: ""};
     self.newTruckType = ko.mapping.fromJS(emptyTruckType);
     self.newTruck     = ko.mapping.fromJS(emptyTruck);
-    self.addTruckType = function() {
+    self.editing      = ko.observable(false);
+    self.orgTruckType  = null;
+    self.editTruckType = function(item) {
+      ko.mapping.fromJS(item, self.newTruckType);
+      self.orgTruckType = item;
+      self.editing(true);
+    }
+    self.saveTruckType = function() {
       $.post(url, ko.mapping.toJS(self.newTruckType), function(data){
-        data.list = [];
-        self.trucks.push(ko.mapping.fromJS(data)); // has _id from db
-        console.log("added truckType", data._id);
+        if(self.editing()){
+          ko.mapping.fromJS(data, {}, self.orgTruckType);
+          console.log("edited truckType", data._id);
+          self.editing(false);
+        }else{
+          data.list = [];
+          self.trucks.push(ko.mapping.fromJS(data)); // has _id from db
+          console.log("added truckType", data._id);
+        }
         ko.mapping.fromJS(emptyTruckType, self.newTruckType);
       });
     };

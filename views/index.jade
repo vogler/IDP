@@ -72,17 +72,18 @@ html(lang="de")
                 span(data-bind="text: name")
                 span.muted(data-bind="text: ' ('+volume()+', '+speed()+')'")
                 a.pull-right(data-bind="click: $parent.removeTruckType"): i.icon-trash
+                a.pull-right(data-bind="click: $parent.editTruckType"): i.icon-pencil
                 ul(data-bind="foreach: truckType.list")
                   li
                     span(data-bind="text: name")
                     a.pull-right(data-bind="click: $parents[1].removeTruck.bind($data, truckType)"): i.icon-trash
             hr
             h5 Neuer LKW-Typ:
-            form(data-bind="submit: addTruckType")
+            form(data-bind="submit: saveTruckType")
               input(type='text', data-bind="value: newTruckType.name", placeholder='Name...')
               input(type='text', data-bind="value: newTruckType.volume", placeholder='Volumen...')
               input(type='text', data-bind="value: newTruckType.speed", placeholder='Geschwindigkeit...')
-              input.btn(type='submit', value='hinzufügen')
+              input.btn(type='submit', data-bind="value: editing() ? 'bearbeiten' : 'hinzufügen'")
             h5 Neuer Fahrer:
             form(data-bind="submit: addTruck, visible: trucks().length")
               select.input-medium(data-bind="options: trucks, optionsText: 'name', value: newTruck.truckType, optionsCaption: 'auswählen...'")
