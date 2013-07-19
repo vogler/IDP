@@ -113,7 +113,7 @@ function SitesViewModel() {
     self.editing      = ko.observable(false);
     self.orgTruckType  = null;
     self.editTruckType = function(item) {
-      ko.mapping.fromJS(item, self.newTruckType);
+      ko.mapping.fromJS(ko.mapping.toJS(item), self.newTruckType);
       self.orgTruckType = item;
       self.editing(true);
     }
