@@ -166,10 +166,10 @@ html(lang="de")
         //-   i.icon-flag
         //-   |  reverse geocode
         //- br
-        a.btn.btn-small(data-bind="attr: {href: '/map/'+loadedMap()}", rel="tooltip", title="Alle Daten als JSON anzeigen")
+        a.btn.btn-small(onclick="exportData('json')", rel="tooltip", title="Alle Daten als JSON anzeigen")
           i.icon-file
           | JSON
-        a.btn.btn-small(onclick="downloadCSV()", rel="tooltip", title="Auswertung als CSV herunterladen")
+        a.btn.btn-small(onclick="exportData('csv')", rel="tooltip", title="Auswertung als CSV herunterladen")
           i.icon-file
           | CSV
       h3 Animation

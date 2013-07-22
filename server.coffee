@@ -168,10 +168,12 @@ app.get "/map/:format?/:file", (req, res) ->
       res.send 404
       return
     map = JSON.parse data
+    map.file = file
     map.excludedGates = excludedGates
     map.excludedTimes = excludedTimes
     # combine multiple tracks if there is more than one file
     if extraFiles.length > 0
+      map.extraFiles = extraFiles
       maps = extraFiles.map (file) -> JSON.parse(fs.readFileSync(paths.json + file)) # parse all maps TODO better to do it async...
       console.log "loaded and parsed extra files:", maps.length, extraFiles
       tracks = maps.map (x) -> x.track
@@ -250,12 +252,13 @@ analyze = (map, site, truck, req, res) ->
   map.meanDuration = Math.round(time/map.track.length)
   if req.params.format=='csv'
     # res.header('content-type','text/csv'); 
-    # res.header('content-disposition', 'attachment; filename='+file+'.csv'); 
-    res.attachment(file+'.csv') # sets content-type and -disposition
+    # res.header('content-disposition', 'attachment; filename='+map.file+'.csv'); 
+    res.attachment(map.file+'.csv') # sets content-type and -disposition
     header = [['Gates'].concat(map.stats.info.map (col) -> col.from+' zu '+col.to)]
     for row in header.concat(map.stats.table)
       row = row.map (x) -> if x instanceof Array then JSON.stringify x else x
       res.write row.join("; \t")+"\r\n" # columns separated by semi-colons, rows by CRLF
+    res.write "\r\nausgewertete Dateien:; \t"+JSON.stringify [map.file].concat(map.extraFiles)
     res.write "\r\nausgeschlossene Gates:; \t"+JSON.stringify map.excludedGates
     res.write "\r\nausgeschlossene Zeiten:; \t"+JSON.stringify map.excludedTimes
     res.end()

@@ -313,18 +313,22 @@ function reloadStats(){
   return true; // for reloadStats on checkbox click
 }
 
+function getMapParams(){
+  var excludedGates = getExcludedGates();
+  var extraFiles = $.map($('#files input:checked:enabled+a'), function(x){ return $(x).text() }); // other checked files
+  return {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes), extraFiles: JSON.stringify(extraFiles)};
+}
+
 function loadMap(file, onlyStats){ // reloads if file is undefined
   if(!file) file = loadedMap();
   else loadedMap(file);
   if(!file) return;
   anim_stop();
-  var excludedGates = getExcludedGates();
-  var extraFiles = $.map($('#files input:checked:enabled+a'), function(x){ return $(x).text() }); // other checked files
-  console.log('extraFiles:', extraFiles);
-  $.getJSON('/map/' + file, {excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes), extraFiles: JSON.stringify(extraFiles)}, function(json){
+  var params = getMapParams();
+  $.getJSON('/map/' + file, params, function(json){
       // stats
       ko.mapping.fromJS(json.stats, stats);
-      if(!excludedGates.length)
+      if(!getExcludedGates().length)
         stats.intersectedGatesOrg(stats.intersectedGates());
       boxPlot(); // append box plots at end of body
       if(onlyStats) return; // don't redraw everything (e.g. only added gate or excluded gate or time)
@@ -530,11 +534,8 @@ function toggleHeatmap() {
     heatmap.setData(path.getPath()); // OPT: not set in loadMap() if heatmap is deactivated
 }
 
-function downloadCSV(){
-  var excludedGates = getExcludedGates();
-  req = '/map/csv/'+loadedMap();
-  if(excludedGates.length || excludedTimes.length)
-    req += '?' + $.param({excludedGates: JSON.stringify(excludedGates), excludedTimes: JSON.stringify(excludedTimes)});
-  console.log(req);
+function exportData(format){
+  var req = '/map/' + format + '/' + loadedMap() + '?' + $.param(getMapParams());
+  console.log('exportData', req);
   location.href = req;
 }
