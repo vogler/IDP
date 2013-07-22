@@ -194,6 +194,7 @@ analyze = (map, site, truck, req, res) ->
     # m1 = (b.lat-a.lat) / (b.lng-a.lng)
     # t1 = a.lat - m1*a.lng
     duration = b.time - a.time
+    return b if duration<0 # can happen when multiple tracks are stitched together
     time += duration
     for gate in gates # TODO: optimization: check bounds to skip calculations?
       # gate.i = parseInt(gate.i)
