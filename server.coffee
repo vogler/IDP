@@ -157,7 +157,7 @@ app.get "/map/:format?/:file", (req, res) ->
   # handle request and pass data to analyze
   excludedGates = if req.query.excludedGates then JSON.parse(req.query.excludedGates) else []
   excludedTimes = if req.query.excludedTimes then JSON.parse(req.query.excludedTimes) else []
-  extraFiles    = if req.query.extraFiles    then JSON.parse(req.query.extraFiles)    else [] # append tracks of these files for analyze
+  extraFiles    = if req.query.extraFiles    then JSON.parse(req.query.extraFiles)    else [] # extra files to analyze
   file = req.params.file
   console.log file, req.params.format, excludedGates, excludedTimes
   pathJson = paths.json + file
@@ -171,13 +171,14 @@ app.get "/map/:format?/:file", (req, res) ->
     map.file = file
     map.excludedGates = excludedGates
     map.excludedTimes = excludedTimes
+    map.files = [file: map.file, startTime: map.startTime, track: map.track]
     # combine multiple tracks if there is more than one file
     if extraFiles.length > 0
       map.extraFiles = extraFiles
       maps = extraFiles.map (file) -> JSON.parse(fs.readFileSync(paths.json + file)) # parse all maps TODO better to do it async...
       console.log "loaded and parsed extra files:", maps.length, extraFiles
-      tracks = maps.map (x) -> x.track
-      map.track = map.track.concat tracks.reduce (a, b) -> a.concat b # and combine all tracks
+      files = maps.map (x) -> file: x.file, startTime: x.startTime, track: x.track
+      map.files = map.files.concat files # and combine all files
     dbSites.findOne "tracks.file": file, (err, site) -> # get gates for site that has corresponding track.file -> no dups for filenames!
       truckInst = (site.tracks.filter (x) -> x.file==file)[0].truck
       dbTrucks.findById truckInst._id, (err, truckType) ->
@@ -188,42 +189,44 @@ app.get "/map/:format?/:file", (req, res) ->
 analyze = (map, site, truck, req, res) ->
   gates = site?.gates ? [] # maybe there are no gates yet
   map.site = site._id
-  map.intersections = []
-  time = 0
-  map.track.reduce (a, b, i, arr) -> # TODO: parallel, perpendicular lines?
-    # m1 = (b.lat-a.lat) / (b.lng-a.lng)
-    # t1 = a.lat - m1*a.lng
-    duration = b.time - a.time
-    return b if duration<0 # can happen when multiple tracks are stitched together
-    time += duration
-    for gate in gates # TODO: optimization: check bounds to skip calculations?
-      # gate.i = parseInt(gate.i)
-      if gate.i in map.excludedGates
-        continue
-      gate.path.reduce (c, d, i, arr) ->
-        # m2 = (d.lat-c.lat) / (d.lng-c.lng)
-        # t2 = c.lat - m2*c.lng
-        N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
-        s = ((c.lng-a.lng) * (d.lat-c.lat) - (c.lat-a.lat) * (d.lng-c.lng)) / N
-        t = (a.lng-c.lng + s*(b.lng-a.lng)) / (d.lng-c.lng)
-        # check if the intersection is on the line segment
-        if 0 <= s <= 1 and 0 <= t <= 1
-          point =
-            lng: a.lng + s*(b.lng-a.lng)
-            lat: a.lat + s*(b.lat-a.lat)
-          # console.log 'intersection at', point
-          # console.log 'intersection at', time, 's for', duration, 's'
-          map.intersections.push time: time, gate: gate.i # chronological
-        d
-    b
+  for file in map.files
+    file.intersections = []
+    time = 0
+    file.track.reduce (a, b, i, arr) -> # TODO: parallel, perpendicular lines?
+      # m1 = (b.lat-a.lat) / (b.lng-a.lng)
+      # t1 = a.lat - m1*a.lng
+      duration = b.time - a.time
+      time += duration
+      for gate in gates # TODO: optimization: check bounds to skip calculations?
+        # gate.i = parseInt(gate.i)
+        if gate.i in map.excludedGates
+          continue
+        gate.path.reduce (c, d, i, arr) ->
+          # m2 = (d.lat-c.lat) / (d.lng-c.lng)
+          # t2 = c.lat - m2*c.lng
+          N = (b.lng-a.lng) * (d.lat-c.lat) - (b.lat-a.lat) * (d.lng-c.lng)
+          s = ((c.lng-a.lng) * (d.lat-c.lat) - (c.lat-a.lat) * (d.lng-c.lng)) / N
+          t = (a.lng-c.lng + s*(b.lng-a.lng)) / (d.lng-c.lng)
+          # check if the intersection is on the line segment
+          if 0 <= s <= 1 and 0 <= t <= 1
+            point =
+              lng: a.lng + s*(b.lng-a.lng)
+              lat: a.lat + s*(b.lat-a.lat)
+            # console.log 'intersection at', point
+            # console.log 'intersection at', time, 's for', duration, 's'
+            file.intersections.push time: time, gate: gate.i # chronological
+          d
+      b
   # aggregate stats
   stats = {}
-  if map.intersections.length>1
-    map.intersections.reduce (a, b) ->
-      stats[a.gate] ?= {}
-      stats[a.gate][b.gate] ?= times: []
-      stats[a.gate][b.gate].times.push [map.startTime+a.time, b.time-a.time]
-      b
+  for file in map.files
+    if file.intersections.length>1
+      file.intersections.reduce (a, b) ->
+        stats[a.gate] ?= {}
+        stats[a.gate][b.gate] ?= times: []
+        stats[a.gate][b.gate].times.push [file.startTime+a.time, b.time-a.time]
+        b
+  delete map.files # done with calculations for multiple tracks -> remove data from output
   map.stats = info: [], table: []
   for g1,v1 of stats
     for g2,v2 of v1
