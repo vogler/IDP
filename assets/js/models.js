@@ -22,6 +22,11 @@ function SitesViewModel() {
   self.site = ko.observable();
   var emptyCurrentTruck = {name: "", volume: "", speed: "", driver: ""};
   self.truck = ko.mapping.fromJS(emptyCurrentTruck);
+  self.emptyTruck = function(){
+    ko.mapping.fromJS(emptyCurrentTruck, self.truck);
+  };
+  self.emptyTruck();
+  self.track = ko.mapping.fromJS({site: null, truck: {_id: null, name: null}});
   self.newItem = ko.observable();
   self.uploading = ko.observable(false);
 
@@ -101,6 +106,27 @@ function SitesViewModel() {
       site.tracks.remove(track); // destroy marks for deletion
     });
   };
+  self.editTrack = function(){
+    console.log('editing track', loadedMap(), self.track);
+    // if(self.site()._id() != self.track.site()._id()){
+      var trackOld   = self.site().tracks().find(function(x){return x.file()==loadedMap()});
+      var track    = ko.mapping.toJS(trackOld);
+      track.truck  = ko.mapping.toJS(self.track.truck);
+      var trackNew = ko.mapping.fromJS(track);
+      // console.log('changing site of track', track, 'from', self.site().name(), 'to', self.track.site().name());
+      $.put(url+'/'+self.site()._id(), {$pull: {tracks: ko.mapping.toJS(trackOld)}}, function(data){
+        $.put(url+'/'+self.track.site()._id(), {$push: {tracks: track}}, function(data){
+          self.site().tracks.remove(trackOld); // destroy marks for deletion
+          self.site(self.track.site());
+          self.site().tracks.push(trackNew);
+          drawGates();    // different gates
+          // reloadStats();  // different stats
+          loadMap();      // different truck
+          $('#track').modal('hide');
+        });
+      });
+    // }
+  }
 
   trucksViewModel = new function(){
     var self = this;

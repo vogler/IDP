@@ -90,6 +90,26 @@ html(lang="de")
               input(type='text', data-bind="value: newTruck.name", placeholder='Name...')
               input.btn(type='submit', value='hinzufügen')
 
+    #track.modal.fade.hide
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true") x
+        h3 Track bearbeiten
+      .modal-body
+        h5(data-bind="text: loadedMap")
+        //- changeTruckType & Truck
+        //- changeSite
+        form(data-bind="submit: editTrack")
+          fieldset
+            label Baustelle
+            select.input-medium(data-bind="options: sites, optionsText: 'name', value: track.site")
+            label LKW
+            select.input-medium(data-bind="foreach: trucksViewModel.trucks, value: track.truck, optionsCaption: 'auswählen...'")
+              optgroup(data-bind="attr: {label: name}, foreach: list")
+                option(data-bind="text: name, value: {_id: $parent._id, name: name}")
+            //- label Fahrer
+            //- select.input-medium(data-bind="options: trucksViewModel.trucks, optionsText: 'name', value: track.driver")
+          input.btn(type='submit', value="bearbeiten")
+
     #uploads.modal.fade.hide
       .modal-header
         button.close(data-dismiss="modal", aria-hidden="true") x
@@ -152,7 +172,7 @@ html(lang="de")
         small#time_duration
         br
         | LKW: 
-        small(data-bind="text: truck.name()+' ('+truck.driver()+')'")
+        small(data-bind="text: truck.name()+' ('+truck.driver()+', '+truck.volume()+', '+truck.speed()+')'")
         br
         | Wetter: 
         small
@@ -166,6 +186,8 @@ html(lang="de")
         //-   i.icon-flag
         //-   |  reverse geocode
         //- br
+        a.btn.btn-small(data-target='#track', data-toggle='modal', rel="tooltip", title="Track bearbeiten")
+          i.icon-pencil
         a.btn.btn-small(onclick="exportData('json')", rel="tooltip", title="Alle Daten als JSON anzeigen")
           i.icon-file
           | JSON

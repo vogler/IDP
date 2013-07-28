@@ -409,11 +409,20 @@ function loadMap(file, onlyStats){ // reloads if file is undefined
       }
       // for the current site, get the truck for this track (don't get it from server because local model of truck could get edited)
       var truckInst = sitesViewModel.site().tracks().find(function(x){return x.file()==loadedMap()}).truck;
+      // update data for editing track
+      sitesViewModel.track.site(sitesViewModel.site());
+      // both don't work...
+      // sitesViewModel.track.truck = truckInst;
+      // ko.mapping.fromJS(ko.mapping.toJS(truckInst), sitesViewModel.track.truck);
       var truckType = trucksViewModel.trucks().find(function(x){return x._id()==truckInst._id()});
-      var truck = ko.toJS(truckType);
-      if(truck) truck.driver = truckInst.name();
-      // sitesViewModel.truck(truck);
-      ko.mapping.fromJS(truck, sitesViewModel.truck);
+      if(truckType){
+        var truck = ko.mapping.toJS(truckType);
+        truck.driver = truckInst.name();
+        ko.mapping.fromJS(truck, sitesViewModel.truck);
+      }else{
+        sitesViewModel.emptyTruck();
+        sitesViewModel.truck.driver(truckInst.name());
+      }
   });
 }
 
